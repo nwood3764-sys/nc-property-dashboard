@@ -14,7 +14,8 @@ export default function ExportButton({ properties }: ExportButtonProps) {
       "Category", "Occupancy Date", "Age (Years)",
       "FHA Number", "SOA", "Subsidized", "Section 8", "202/811",
       "Helene", "Florence", "Matthew", "Dorian", "Flood Zone",
-      "Age Score", "Disaster Score", "Flood Score", "Weatherization Score"
+      "Age Score", "Disaster Score", "Flood Score", "Weatherization Score",
+      "LIHTC", "Data Source"
     ];
 
     const rows = properties.map((p) => [
@@ -47,6 +48,8 @@ export default function ExportButton({ properties }: ExportButtonProps) {
       p.disaster_score,
       p.flood_risk_score,
       p.weatherization_score,
+      p.is_lihtc ? "Y" : "N",
+      p.category_clean === "LIHTC" ? "LIHTC Only" : p.is_lihtc ? "HUD + LIHTC" : "HUD Only",
     ]);
 
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");

@@ -1,4 +1,4 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign } from "lucide-react";
 import TierBadge from "./TierBadge";
 import ScoreBar from "./ScoreBar";
 import DisasterBadges from "./DisasterBadges";
@@ -50,6 +50,14 @@ function ExpandedRow({ property }: { property: Property }) {
               {p.soa_clean && <p><span className="text-muted-foreground">SOA:</span> {p.soa_clean}</p>}
               {p.occupancy_date && <p><span className="text-muted-foreground">Occupancy Date:</span> {p.occupancy_date}</p>}
               {p.property_age_years != null && <p><span className="text-muted-foreground">Age:</span> {p.property_age_years} years</p>}
+              {p.is_lihtc && (
+                <p className="flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-[oklch(0.90_0.08_140)] text-[oklch(0.30_0.10_140)] text-xs font-semibold">
+                    <BadgeDollarSign className="w-3 h-3" /> LIHTC
+                  </span>
+                  {p.lihtc_compliance && <span className="text-xs text-muted-foreground ml-1">{p.lihtc_compliance}</span>}
+                </p>
+              )}
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, NC ${p.zip_code}`)}`}
                 target="_blank"
@@ -102,6 +110,10 @@ function ExpandedRow({ property }: { property: Property }) {
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${p.coastal_flood_zone ? "bg-[oklch(0.55_0.15_240)]" : "bg-gray-300"}`} />
                 <span className={p.coastal_flood_zone ? "font-medium" : "text-muted-foreground"}>Coastal Flood Zone</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${p.is_lihtc ? "bg-[oklch(0.50_0.15_140)]" : "bg-gray-300"}`} />
+                <span className={p.is_lihtc ? "font-medium" : "text-muted-foreground"}>LIHTC</span>
               </div>
             </div>
           </div>
@@ -306,6 +318,11 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                       {p.coastal_flood_zone && (
                         <span title="Coastal Flood Zone" className="w-5 h-5 rounded-sm bg-[oklch(0.90_0.03_240)] flex items-center justify-center">
                           <Droplets className="w-3 h-3 text-[oklch(0.45_0.15_240)]" />
+                        </span>
+                      )}
+                      {p.is_lihtc && (
+                        <span title="LIHTC" className="w-5 h-5 rounded-sm bg-[oklch(0.90_0.08_140)] flex items-center justify-center">
+                          <BadgeDollarSign className="w-3 h-3 text-[oklch(0.35_0.12_140)]" />
                         </span>
                       )}
                     </div>

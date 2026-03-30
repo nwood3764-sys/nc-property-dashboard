@@ -95,7 +95,7 @@ export default function Home() {
               Prioritizing {stats.total.toLocaleString()} North Carolina Properties
             </h2>
             <p className="text-sm text-white/80 mt-2 max-w-lg">
-              Identifying older HUD-assisted properties most in need of weatherization upgrades,
+              Identifying older HUD-assisted and LIHTC properties most in need of weatherization upgrades,
               electrification retrofits, and hurricane/flood damage recovery.
             </p>
           </div>
@@ -140,11 +140,11 @@ export default function Home() {
             sub={`${Math.round((stats.subsidized / stats.total) * 100)}% of total`}
           />
           <MetricCard
-            label="Avg Priority Score"
-            value={stats.avgScore}
-            icon={<TrendingUp className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
-            accent="oklch(0.94 0.01 250)"
-            sub="out of 100"
+            label="LIHTC Properties"
+            value={stats.lihtcCount}
+            icon={<TrendingUp className="w-5 h-5 text-white" />}
+            accent="oklch(0.50 0.15 140)"
+            sub={`${stats.lihtcOnlyCount} LIHTC-only / ${stats.hudLihtcOverlap} overlap`}
           />
         </div>
 
@@ -251,7 +251,7 @@ export default function Home() {
         <footer className="border-t border-border pt-4 pb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs text-muted-foreground">
             <p>
-              Data source: HUD Active Portfolio Property Data. Disaster data: FEMA disaster declarations (DR-4827, DR-4393, DR-4285, DR-4465).
+              Data sources: HUD Active Portfolio Property Data & HUD LIHTC Database. Disaster data: FEMA disaster declarations (DR-4827, DR-4393, DR-4285, DR-4465).
             </p>
             <p>
               Last updated: March 2026

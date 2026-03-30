@@ -15,6 +15,8 @@ const defaultFilters: Filters = {
   sec8Only: false,
   elderlyDisabledOnly: false,
   floodZoneOnly: false,
+  lihtcOnly: false,
+  dataSource: "all",
 };
 
 export function usePropertyData() {
@@ -93,6 +95,12 @@ export function usePropertyData() {
     if (filters.sec8Only) result = result.filter((p) => p.is_sec8_ind);
     if (filters.elderlyDisabledOnly) result = result.filter((p) => p.is_202_811_ind);
     if (filters.floodZoneOnly) result = result.filter((p) => p.coastal_flood_zone);
+    if (filters.lihtcOnly) result = result.filter((p) => p.is_lihtc);
+
+    // Data source filter
+    if (filters.dataSource === "hud") result = result.filter((p) => p.category_clean !== "LIHTC");
+    else if (filters.dataSource === "lihtc") result = result.filter((p) => p.is_lihtc);
+    else if (filters.dataSource === "both") result = result.filter((p) => p.is_lihtc && p.category_clean !== "LIHTC");
 
     return result;
   }, [filters]);
@@ -139,6 +147,10 @@ export function usePropertyData() {
       floodZone: fp.filter((p) => p.coastal_flood_zone).length,
       totalUnits,
       totalAssistedUnits,
+      lihtcCount: fp.filter((p) => p.is_lihtc).length,
+      lihtcOnlyCount: fp.filter((p) => p.category_clean === "LIHTC").length,
+      hudOnlyCount: fp.filter((p) => !p.is_lihtc).length,
+      hudLihtcOverlap: fp.filter((p) => p.is_lihtc && p.category_clean !== "LIHTC").length,
     };
   }, [filteredProperties]);
 

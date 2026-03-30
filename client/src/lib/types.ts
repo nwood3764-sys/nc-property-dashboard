@@ -35,6 +35,8 @@ export interface Property {
   est_buildings: number;
   lat: number | null;
   lng: number | null;
+  is_lihtc?: boolean;
+  lihtc_compliance?: string;
 }
 
 export type SortField =
@@ -62,4 +64,6 @@ export interface Filters {
   sec8Only: boolean;
   elderlyDisabledOnly: boolean;
   floodZoneOnly: boolean;
+  lihtcOnly: boolean;
+  dataSource: string;
 }

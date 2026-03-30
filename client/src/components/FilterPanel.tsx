@@ -73,7 +73,9 @@ export default function FilterPanel({
     filters.subsidizedOnly ||
     filters.sec8Only ||
     filters.elderlyDisabledOnly ||
-    filters.floodZoneOnly;
+    filters.floodZoneOnly ||
+    filters.lihtcOnly ||
+    filters.dataSource !== "all";
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm">
@@ -142,7 +144,7 @@ export default function FilterPanel({
 
       {/* Expanded filters */}
       {expanded && (
-        <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           {/* Hurricane filter */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
@@ -235,12 +237,40 @@ export default function FilterPanel({
             </Select>
           </div>
 
+          {/* Data Source filter */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+              Data Source
+            </label>
+            <Select
+              value={filters.dataSource}
+              onValueChange={(val) => updateFilter("dataSource", val)}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="All sources" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="hud">HUD Portfolio Only</SelectItem>
+                <SelectItem value="lihtc">LIHTC (All)</SelectItem>
+                <SelectItem value="both">HUD + LIHTC Overlap</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Boolean filters */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
               Property Flags
             </label>
             <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={filters.lihtcOnly}
+                  onCheckedChange={(v) => updateFilter("lihtcOnly", !!v)}
+                />
+                LIHTC Only
+              </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <Checkbox
                   checked={filters.subsidizedOnly}
