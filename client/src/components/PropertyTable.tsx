@@ -1,4 +1,4 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid } from "lucide-react";
 import TierBadge from "./TierBadge";
 import ScoreBar from "./ScoreBar";
 import DisasterBadges from "./DisasterBadges";
@@ -17,12 +17,26 @@ function SortIcon({ field, currentField, direction }: { field: SortField; curren
   return direction === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />;
 }
 
+const buildingTypeIcons: Record<string, string> = {
+  "Group Home": "🏠",
+  "Townhome": "🏘️",
+  "Garden / Villa": "🏡",
+  "Garden Apartment": "🏡",
+  "Small Apartment": "🏢",
+  "Mid-Rise Apartment": "🏢",
+  "Large Apartment": "🏗️",
+  "High-Rise": "🏙️",
+  "Senior Housing": "🏥",
+  "Nursing / Healthcare": "🏥",
+  "Assisted Living": "🏥",
+};
+
 function ExpandedRow({ property }: { property: Property }) {
   const p = property;
   return (
     <tr>
-      <td colSpan={8} className="bg-muted/30 px-6 py-4 border-b border-border">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+      <td colSpan={11} className="bg-muted/30 px-6 py-4 border-b border-border">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
           {/* Property Details */}
           <div>
             <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Property Details</h4>
@@ -36,6 +50,18 @@ function ExpandedRow({ property }: { property: Property }) {
               {p.soa_clean && <p><span className="text-muted-foreground">SOA:</span> {p.soa_clean}</p>}
               {p.occupancy_date && <p><span className="text-muted-foreground">Occupancy Date:</span> {p.occupancy_date}</p>}
               {p.property_age_years != null && <p><span className="text-muted-foreground">Age:</span> {p.property_age_years} years</p>}
+            </div>
+          </div>
+
+          {/* Building Info */}
+          <div>
+            <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Building Info</h4>
+            <div className="space-y-1">
+              <p><span className="text-muted-foreground">Building Type:</span> <span className="font-medium">{p.building_type}</span></p>
+              <p><span className="text-muted-foreground">Total Units:</span> <span className="font-medium">{p.total_unit_count}</span></p>
+              <p><span className="text-muted-foreground">Assisted Units:</span> <span className="font-medium">{p.total_assisted_unit_count}</span></p>
+              <p><span className="text-muted-foreground">Est. Stories:</span> <span className="font-medium">{p.est_stories}</span></p>
+              <p><span className="text-muted-foreground">Est. Buildings:</span> <span className="font-medium">{p.est_buildings}</span></p>
             </div>
           </div>
 
@@ -140,18 +166,18 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[oklch(0.22_0.06_250)] text-white">
-              <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider w-8"></th>
+              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider w-8"></th>
               <th
-                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => onSort("total_priority_score")}
               >
                 <span className="flex items-center gap-1">
                   Score <SortIcon field="total_priority_score" currentField={sortField} direction={sortDirection} />
                 </span>
               </th>
-              <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider">Tier</th>
+              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Tier</th>
               <th
-                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => onSort("property_name_clean")}
               >
                 <span className="flex items-center gap-1">
@@ -159,7 +185,7 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                 </span>
               </th>
               <th
-                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => onSort("county_clean")}
               >
                 <span className="flex items-center gap-1">
@@ -167,15 +193,25 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                 </span>
               </th>
               <th
-                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => onSort("total_unit_count")}
+              >
+                <span className="flex items-center gap-1">
+                  Units <SortIcon field="total_unit_count" currentField={sortField} direction={sortDirection} />
+                </span>
+              </th>
+              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Type</th>
+              <th
+                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => onSort("property_age_years")}
               >
                 <span className="flex items-center gap-1">
                   Age <SortIcon field="property_age_years" currentField={sortField} direction={sortDirection} />
                 </span>
               </th>
-              <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider">Disasters</th>
-              <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
+              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Disasters</th>
+              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Structure</th>
+              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
             </tr>
           </thead>
           <tbody>
@@ -193,26 +229,54 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                       <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <ScoreBar score={p.total_priority_score} tier={p.priority_tier} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <TierBadge tier={p.priority_tier} />
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="max-w-[240px]">
+                  <td className="px-3 py-3">
+                    <div className="max-w-[220px]">
                       <p className="font-medium text-foreground truncate">{p.property_name_clean}</p>
                       <p className="text-xs text-muted-foreground truncate">{p.city_clean}, NC {p.zip_code}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm">{p.county_clean}</td>
-                  <td className="px-4 py-3 text-sm tabular-nums">
+                  <td className="px-3 py-3 text-sm">{p.county_clean}</td>
+                  <td className="px-3 py-3">
+                    <div className="text-sm tabular-nums">
+                      <span className="font-semibold">{p.total_unit_count}</span>
+                      {p.total_assisted_unit_count > 0 && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({p.total_assisted_unit_count} assisted)
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-sm bg-muted text-foreground whitespace-nowrap">
+                      <span>{buildingTypeIcons[p.building_type] || "🏢"}</span>
+                      {p.building_type}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 text-sm tabular-nums">
                     {p.property_age_years != null ? `${p.property_age_years}yr` : "—"}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <DisasterBadges property={p} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="flex items-center gap-0.5" title="Estimated stories">
+                        <Layers className="w-3 h-3" />
+                        {p.est_stories}F
+                      </span>
+                      <span className="flex items-center gap-0.5" title="Estimated buildings">
+                        <LayoutGrid className="w-3 h-3" />
+                        {p.est_buildings}B
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3">
                     <div className="flex gap-1.5">
                       {p.is_subsidized_ind && (
                         <span title="Subsidized" className="w-5 h-5 rounded-sm bg-[oklch(0.94_0.01_250)] flex items-center justify-center">

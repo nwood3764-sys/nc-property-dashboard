@@ -17,6 +17,7 @@ interface FilterPanelProps {
   resetFilters: () => void;
   uniqueCounties: string[];
   uniqueCategories: string[];
+  uniqueBuildingTypes: string[];
   resultCount: number;
 }
 
@@ -26,6 +27,7 @@ export default function FilterPanel({
   resetFilters,
   uniqueCounties,
   uniqueCategories,
+  uniqueBuildingTypes,
   resultCount,
 }: FilterPanelProps) {
   const [expanded, setExpanded] = useState(false);
@@ -67,6 +69,7 @@ export default function FilterPanel({
     filters.counties.size > 0 ||
     filters.disasters.size > 0 ||
     filters.categories.size > 0 ||
+    filters.buildingTypes.size > 0 ||
     filters.subsidizedOnly ||
     filters.sec8Only ||
     filters.elderlyDisabledOnly ||
@@ -80,7 +83,7 @@ export default function FilterPanel({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by name, address, city, county, or ZIP..."
+            placeholder="Search by name, address, city, county, ZIP, or building type..."
             value={filters.search}
             onChange={(e) => updateFilter("search", e.target.value)}
             className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
@@ -139,7 +142,7 @@ export default function FilterPanel({
 
       {/* Expanded filters */}
       {expanded && (
-        <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Hurricane filter */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
@@ -179,6 +182,30 @@ export default function FilterPanel({
                 <SelectItem value="all">All counties</SelectItem>
                 {uniqueCounties.map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Building Type filter */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+              Building Type
+            </label>
+            <Select
+              value={filters.buildingTypes.size === 1 ? Array.from(filters.buildingTypes)[0] : "all"}
+              onValueChange={(val) => {
+                if (val === "all") updateFilter("buildingTypes", new Set<string>());
+                else updateFilter("buildingTypes", new Set([val]));
+              }}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                {uniqueBuildingTypes.map((bt) => (
+                  <SelectItem key={bt} value={bt}>{bt}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

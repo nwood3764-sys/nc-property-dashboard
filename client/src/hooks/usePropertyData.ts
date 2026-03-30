@@ -10,6 +10,7 @@ const defaultFilters: Filters = {
   counties: new Set<string>(),
   disasters: new Set<string>(),
   categories: new Set<string>(),
+  buildingTypes: new Set<string>(),
   subsidizedOnly: false,
   sec8Only: false,
   elderlyDisabledOnly: false,
@@ -25,19 +26,22 @@ export function usePropertyData() {
 
   // Unique values for filter dropdowns
   const uniqueCounties = useMemo(() => {
-    const counties = Array.from(new Set(allProperties.map((p) => p.county_clean))).filter(Boolean).sort();
-    return counties;
+    return Array.from(new Set(allProperties.map((p) => p.county_clean))).filter(Boolean).sort();
   }, []);
 
   const uniqueCategories = useMemo(() => {
     return Array.from(new Set(allProperties.map((p) => p.category_clean))).filter(Boolean).sort();
   }, []);
 
+  const uniqueBuildingTypes = useMemo(() => {
+    return Array.from(new Set(allProperties.map((p) => p.building_type))).filter(Boolean).sort();
+  }, []);
+
   // Apply filters
   const filteredProperties = useMemo(() => {
     let result = allProperties;
 
-    // Search
+    // Search — also search building type
     if (filters.search) {
       const q = filters.search.toLowerCase();
       result = result.filter(
@@ -47,7 +51,8 @@ export function usePropertyData() {
           p.city_clean.toLowerCase().includes(q) ||
           p.county_clean.toLowerCase().includes(q) ||
           String(p.zip_code).includes(q) ||
-          String(p.property_id).includes(q)
+          String(p.property_id).includes(q) ||
+          (p.building_type && p.building_type.toLowerCase().includes(q))
       );
     }
 
@@ -76,6 +81,11 @@ export function usePropertyData() {
     // Category filter
     if (filters.categories.size > 0) {
       result = result.filter((p) => filters.categories.has(p.category_clean));
+    }
+
+    // Building type filter
+    if (filters.buildingTypes.size > 0) {
+      result = result.filter((p) => filters.buildingTypes.has(p.building_type));
     }
 
     // Boolean filters
@@ -115,6 +125,8 @@ export function usePropertyData() {
   // Summary stats for filtered data
   const stats = useMemo(() => {
     const fp = filteredProperties;
+    const totalUnits = fp.reduce((s, p) => s + (p.total_unit_count || 0), 0);
+    const totalAssistedUnits = fp.reduce((s, p) => s + (p.total_assisted_unit_count || 0), 0);
     return {
       total: fp.length,
       critical: fp.filter((p) => p.priority_tier === "Critical").length,
@@ -125,6 +137,8 @@ export function usePropertyData() {
       subsidized: fp.filter((p) => p.is_subsidized_ind).length,
       avgScore: fp.length > 0 ? Math.round(fp.reduce((s, p) => s + p.total_priority_score, 0) / fp.length) : 0,
       floodZone: fp.filter((p) => p.coastal_flood_zone).length,
+      totalUnits,
+      totalAssistedUnits,
     };
   }, [filteredProperties]);
 
@@ -145,6 +159,18 @@ export function usePropertyData() {
       .map(([county, data]) => ({ county, ...data }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 20);
+  }, [filteredProperties]);
+
+  // Building type breakdown for chart
+  const buildingTypeBreakdown = useMemo(() => {
+    const map = new Map<string, number>();
+    filteredProperties.forEach((p) => {
+      const bt = p.building_type || "Unknown";
+      map.set(bt, (map.get(bt) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
   }, [filteredProperties]);
 
   const handleSort = (field: SortField) => {
@@ -172,6 +198,7 @@ export function usePropertyData() {
     allFiltered: sortedProperties,
     stats,
     countyBreakdown,
+    buildingTypeBreakdown,
     sortField,
     sortDirection,
     handleSort,
@@ -184,5 +211,6 @@ export function usePropertyData() {
     pageSize,
     uniqueCounties,
     uniqueCategories,
+    uniqueBuildingTypes,
   };
 }

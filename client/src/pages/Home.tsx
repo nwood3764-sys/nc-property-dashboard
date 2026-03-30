@@ -13,6 +13,7 @@ import PropertyTable from "@/components/PropertyTable";
 import Pagination from "@/components/Pagination";
 import CountyChart from "@/components/CountyChart";
 import ScoreDistribution from "@/components/ScoreDistribution";
+import BuildingTypeChart from "@/components/BuildingTypeChart";
 import ExportButton from "@/components/ExportButton";
 import ScoringMethodology from "@/components/ScoringMethodology";
 import {
@@ -24,6 +25,7 @@ import {
   Shield,
   Users,
   BarChart3,
+  Home as HomeIcon,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -36,6 +38,7 @@ export default function Home() {
     allFiltered,
     stats,
     countyBreakdown,
+    buildingTypeBreakdown,
     sortField,
     sortDirection,
     handleSort,
@@ -48,6 +51,7 @@ export default function Home() {
     pageSize,
     uniqueCounties,
     uniqueCategories,
+    uniqueBuildingTypes,
   } = usePropertyData();
 
   const [showCharts, setShowCharts] = useState(false);
@@ -96,13 +100,20 @@ export default function Home() {
       </div>
 
       <main className="container py-6 space-y-6">
-        {/* Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {/* Metric Cards — row 1 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <MetricCard
             label="Total Properties"
             value={stats.total}
             icon={<Building2 className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
             accent="oklch(0.94 0.01 250)"
+          />
+          <MetricCard
+            label="Total Units"
+            value={stats.totalUnits}
+            icon={<HomeIcon className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
+            accent="oklch(0.94 0.01 250)"
+            sub={`${stats.totalAssistedUnits.toLocaleString()} assisted`}
           />
           <MetricCard
             label="Critical Priority"
@@ -177,9 +188,10 @@ export default function Home() {
 
         {/* Charts */}
         {showCharts && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <CountyChart data={countyBreakdown} />
             <ScoreDistribution properties={allFiltered} />
+            <BuildingTypeChart data={buildingTypeBreakdown} />
           </div>
         )}
 
@@ -190,6 +202,7 @@ export default function Home() {
           resetFilters={resetFilters}
           uniqueCounties={uniqueCounties}
           uniqueCategories={uniqueCategories}
+          uniqueBuildingTypes={uniqueBuildingTypes}
           resultCount={allFiltered.length}
         />
 

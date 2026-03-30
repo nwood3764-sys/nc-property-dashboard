@@ -30,6 +30,9 @@ export interface Property {
   weatherization_score: number;
   total_priority_score: number;
   priority_tier: "Critical" | "High" | "Medium" | "Low";
+  building_type: string;
+  est_stories: number;
+  est_buildings: number;
 }
 
 export type SortField =
@@ -40,7 +43,9 @@ export type SortField =
   | "property_age_years"
   | "disaster_score"
   | "weatherization_score"
-  | "total_unit_count";
+  | "total_unit_count"
+  | "est_stories"
+  | "est_buildings";
 
 export type SortDirection = "asc" | "desc";
 
@@ -50,6 +55,7 @@ export interface Filters {
   counties: Set<string>;
   disasters: Set<string>;
   categories: Set<string>;
+  buildingTypes: Set<string>;
   subsidizedOnly: boolean;
   sec8Only: boolean;
   elderlyDisabledOnly: boolean;

@@ -10,7 +10,8 @@ export default function ExportButton({ properties }: ExportButtonProps) {
   const handleExport = () => {
     const headers = [
       "Priority Score", "Tier", "Property Name", "Address", "City", "County", "ZIP",
-      "Units", "Assisted Units", "Category", "Occupancy Date", "Age (Years)",
+      "Total Units", "Assisted Units", "Building Type", "Est. Stories", "Est. Buildings",
+      "Category", "Occupancy Date", "Age (Years)",
       "FHA Number", "SOA", "Subsidized", "Section 8", "202/811",
       "Helene", "Florence", "Matthew", "Dorian", "Flood Zone",
       "Age Score", "Disaster Score", "Flood Score", "Weatherization Score"
@@ -26,6 +27,9 @@ export default function ExportButton({ properties }: ExportButtonProps) {
       p.zip_code,
       p.total_unit_count,
       p.total_assisted_unit_count,
+      `"${p.building_type}"`,
+      p.est_stories,
+      p.est_buildings,
       `"${p.category_clean}"`,
       p.occupancy_date,
       p.property_age_years ?? "",
