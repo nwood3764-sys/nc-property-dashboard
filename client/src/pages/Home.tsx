@@ -3,7 +3,7 @@
  * Design: "Civic Blueprint" — Government Modernist
  * Colors: Navy (#1B3A5C) primary, white canvas, tier-coded alerts
  * Typography: Space Grotesk headings, Work Sans body
- * Layout: Wide single-column, sticky header, summary → filters → table
+ * Layout: Wide single-column, sticky header, summary → map → charts → filters → table
  */
 
 import { usePropertyData } from "@/hooks/usePropertyData";
@@ -14,18 +14,20 @@ import Pagination from "@/components/Pagination";
 import CountyChart from "@/components/CountyChart";
 import ScoreDistribution from "@/components/ScoreDistribution";
 import BuildingTypeChart from "@/components/BuildingTypeChart";
+import AgeVintageChart from "@/components/AgeVintageChart";
+import PropertyMap from "@/components/PropertyMap";
 import ExportButton from "@/components/ExportButton";
 import ScoringMethodology from "@/components/ScoringMethodology";
 import {
   AlertTriangle,
   Building2,
   CloudLightning,
-  Droplets,
   TrendingUp,
   Shield,
-  Users,
   BarChart3,
   Home as HomeIcon,
+  MapIcon,
+  Calendar,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -54,6 +56,7 @@ export default function Home() {
     uniqueBuildingTypes,
   } = usePropertyData();
 
+  const [showMap, setShowMap] = useState(true);
   const [showCharts, setShowCharts] = useState(false);
 
   return (
@@ -100,7 +103,7 @@ export default function Home() {
       </div>
 
       <main className="container py-6 space-y-6">
-        {/* Metric Cards — row 1 */}
+        {/* Metric Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <MetricCard
             label="Total Properties"
@@ -145,6 +148,24 @@ export default function Home() {
           />
         </div>
 
+        {/* Map Section */}
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+            <button
+              onClick={() => setShowMap(!showMap)}
+              className="flex items-center gap-2 text-sm font-medium text-[oklch(0.30_0.06_250)] hover:text-[oklch(0.40_0.06_250)] transition-colors"
+            >
+              <MapIcon className="w-4 h-4" />
+              {showMap ? "Hide Map" : "Show Map"}
+            </button>
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">
+              Filtered: {allFiltered.length.toLocaleString()} properties
+            </span>
+          </div>
+          {showMap && <PropertyMap properties={allFiltered} />}
+        </div>
+
         {/* Disaster Context Banner */}
         <div className="relative rounded-sm overflow-hidden border border-border">
           <img
@@ -171,6 +192,9 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Age Vintage Chart — always visible as a key metric */}
+        <AgeVintageChart properties={allFiltered} />
+
         {/* Scoring Methodology */}
         <ScoringMethodology />
 
@@ -181,12 +205,12 @@ export default function Home() {
             className="flex items-center gap-2 text-sm font-medium text-[oklch(0.30_0.06_250)] hover:text-[oklch(0.40_0.06_250)] transition-colors"
           >
             <BarChart3 className="w-4 h-4" />
-            {showCharts ? "Hide Charts" : "Show Charts"}
+            {showCharts ? "Hide Additional Charts" : "Show Additional Charts"}
           </button>
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        {/* Charts */}
+        {/* Additional Charts */}
         {showCharts && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <CountyChart data={countyBreakdown} />

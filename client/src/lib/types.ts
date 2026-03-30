@@ -33,6 +33,8 @@ export interface Property {
   building_type: string;
   est_stories: number;
   est_buildings: number;
+  lat: number | null;
+  lng: number | null;
 }
 
 export type SortField =
