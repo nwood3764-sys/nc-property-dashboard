@@ -1,4 +1,4 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin } from "lucide-react";
 import TierBadge from "./TierBadge";
 import ScoreBar from "./ScoreBar";
 import DisasterBadges from "./DisasterBadges";
@@ -50,6 +50,16 @@ function ExpandedRow({ property }: { property: Property }) {
               {p.soa_clean && <p><span className="text-muted-foreground">SOA:</span> {p.soa_clean}</p>}
               {p.occupancy_date && <p><span className="text-muted-foreground">Occupancy Date:</span> {p.occupancy_date}</p>}
               {p.property_age_years != null && <p><span className="text-muted-foreground">Age:</span> {p.property_age_years} years</p>}
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, NC ${p.zip_code}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 text-xs font-semibold rounded-sm bg-[oklch(0.55_0.15_240)] text-white hover:bg-[oklch(0.48_0.15_240)] transition-colors"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                View on Google Maps
+              </a>
             </div>
           </div>
 
