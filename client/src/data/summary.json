@@ -1,0 +1,63 @@
+{
+  "total_properties": 1353,
+  "tier_counts": {
+    "High": 493,
+    "Low": 425,
+    "Medium": 366,
+    "Critical": 69
+  },
+  "disaster_counts": {
+    "helene": 488,
+    "florence": 341,
+    "matthew": 288,
+    "dorian": 91,
+    "any": 849
+  },
+  "flood_zone": 118,
+  "subsidized": 912,
+  "section8": 593,
+  "elderly_disabled_202_811": 284,
+  "county_counts": {
+    "Mecklenburg": 103,
+    "": 85,
+    "Wake": 73,
+    "Guilford": 62,
+    "Forsyth": 47,
+    "Cumberland": 47,
+    "Alamance": 40,
+    "Gaston": 36,
+    "Durham": 36,
+    "Buncombe": 31,
+    "New Hanover": 29,
+    "Cabarrus": 26,
+    "Iredell": 23,
+    "Pitt": 21,
+    "Rowan": 20,
+    "Johnston": 20,
+    "Wilson": 20,
+    "Orange": 20,
+    "Moore": 19,
+    "Robeson": 18
+  },
+  "category_counts": {
+    "Insured-Unsubsidized": 427,
+    "202/811": 284,
+    "Subsidized - Previously 202/811": 196,
+    "Insured-Subsidized": 180,
+    "Subsidized - Previously Insured": 127,
+    "Subsidized, No HUD Financing": 120,
+    "Use Restriction": 12,
+    "HUD Held": 5,
+    "Insured - Previously Subsidized": 1,
+    "Flexible Subsidy": 1
+  },
+  "avg_score": 42.81005173688101,
+  "score_range": [
+    3,
+    75
+  ],
+  "age_stats": {
+    "with_date": 1110,
+    "avg_age": 33.43693693693694
+  }
+}

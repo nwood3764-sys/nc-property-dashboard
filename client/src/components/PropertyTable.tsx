@@ -1,0 +1,250 @@
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users } from "lucide-react";
+import TierBadge from "./TierBadge";
+import ScoreBar from "./ScoreBar";
+import DisasterBadges from "./DisasterBadges";
+import type { Property, SortField, SortDirection } from "@/lib/types";
+import { useState } from "react";
+
+interface PropertyTableProps {
+  properties: Property[];
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
+}
+
+function SortIcon({ field, currentField, direction }: { field: SortField; currentField: SortField; direction: SortDirection }) {
+  if (field !== currentField) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
+  return direction === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />;
+}
+
+function ExpandedRow({ property }: { property: Property }) {
+  const p = property;
+  return (
+    <tr>
+      <td colSpan={8} className="bg-muted/30 px-6 py-4 border-b border-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+          {/* Property Details */}
+          <div>
+            <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Property Details</h4>
+            <div className="space-y-1">
+              <p><span className="text-muted-foreground">Address:</span> {p.address_clean}</p>
+              <p><span className="text-muted-foreground">City:</span> {p.city_clean}</p>
+              <p><span className="text-muted-foreground">County:</span> {p.county_clean}</p>
+              <p><span className="text-muted-foreground">ZIP:</span> {p.zip_code}</p>
+              <p><span className="text-muted-foreground">Category:</span> {p.category_clean}</p>
+              {p.fha_number && <p><span className="text-muted-foreground">FHA #:</span> {p.fha_number}</p>}
+              {p.soa_clean && <p><span className="text-muted-foreground">SOA:</span> {p.soa_clean}</p>}
+              {p.occupancy_date && <p><span className="text-muted-foreground">Occupancy Date:</span> {p.occupancy_date}</p>}
+              {p.property_age_years != null && <p><span className="text-muted-foreground">Age:</span> {p.property_age_years} years</p>}
+            </div>
+          </div>
+
+          {/* Flags */}
+          <div>
+            <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Program Flags</h4>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${p.is_subsidized_ind ? "bg-[oklch(0.50_0.20_25)]" : "bg-gray-300"}`} />
+                <span className={p.is_subsidized_ind ? "font-medium" : "text-muted-foreground"}>Subsidized</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${p.is_sec8_ind ? "bg-[oklch(0.50_0.20_25)]" : "bg-gray-300"}`} />
+                <span className={p.is_sec8_ind ? "font-medium" : "text-muted-foreground"}>Section 8</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${p.is_202_811_ind ? "bg-[oklch(0.50_0.20_25)]" : "bg-gray-300"}`} />
+                <span className={p.is_202_811_ind ? "font-medium" : "text-muted-foreground"}>202/811 Elderly/Disabled</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${p.is_nursing_home_ind ? "bg-[oklch(0.55_0.15_240)]" : "bg-gray-300"}`} />
+                <span className={p.is_nursing_home_ind ? "font-medium" : "text-muted-foreground"}>Nursing Home</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${p.is_assisted_living_ind ? "bg-[oklch(0.55_0.15_240)]" : "bg-gray-300"}`} />
+                <span className={p.is_assisted_living_ind ? "font-medium" : "text-muted-foreground"}>Assisted Living</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${p.coastal_flood_zone ? "bg-[oklch(0.55_0.15_240)]" : "bg-gray-300"}`} />
+                <span className={p.coastal_flood_zone ? "font-medium" : "text-muted-foreground"}>Coastal Flood Zone</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Score Breakdown */}
+          <div>
+            <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Score Breakdown</h4>
+            <div className="space-y-2">
+              <div>
+                <div className="flex justify-between text-xs mb-0.5">
+                  <span className="text-muted-foreground">Age Score</span>
+                  <span className="font-semibold">{p.age_score}/30</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-[oklch(0.40_0.06_250)]" style={{ width: `${(p.age_score / 30) * 100}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs mb-0.5">
+                  <span className="text-muted-foreground">Disaster Score</span>
+                  <span className="font-semibold">{p.disaster_score}/35</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-[oklch(0.50_0.20_25)]" style={{ width: `${(p.disaster_score / 35) * 100}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs mb-0.5">
+                  <span className="text-muted-foreground">Flood Risk Score</span>
+                  <span className="font-semibold">{p.flood_risk_score}/10</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-[oklch(0.55_0.15_240)]" style={{ width: `${(p.flood_risk_score / 10) * 100}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs mb-0.5">
+                  <span className="text-muted-foreground">Weatherization Score</span>
+                  <span className="font-semibold">{p.weatherization_score}/25</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-[oklch(0.45_0.15_155)]" style={{ width: `${(p.weatherization_score / 25) * 100}%` }} />
+                </div>
+              </div>
+              <div className="pt-2 border-t border-border">
+                <div className="flex justify-between text-sm font-bold">
+                  <span>Total Priority Score</span>
+                  <span>{p.total_priority_score}/100</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+export default function PropertyTable({ properties, sortField, sortDirection, onSort }: PropertyTableProps) {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const tierRowClass: Record<string, string> = {
+    Critical: "row-critical",
+    High: "row-high",
+    Medium: "row-medium",
+    Low: "row-low",
+  };
+
+  return (
+    <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-[oklch(0.22_0.06_250)] text-white">
+              <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider w-8"></th>
+              <th
+                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => onSort("total_priority_score")}
+              >
+                <span className="flex items-center gap-1">
+                  Score <SortIcon field="total_priority_score" currentField={sortField} direction={sortDirection} />
+                </span>
+              </th>
+              <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider">Tier</th>
+              <th
+                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => onSort("property_name_clean")}
+              >
+                <span className="flex items-center gap-1">
+                  Property <SortIcon field="property_name_clean" currentField={sortField} direction={sortDirection} />
+                </span>
+              </th>
+              <th
+                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => onSort("county_clean")}
+              >
+                <span className="flex items-center gap-1">
+                  County <SortIcon field="county_clean" currentField={sortField} direction={sortDirection} />
+                </span>
+              </th>
+              <th
+                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => onSort("property_age_years")}
+              >
+                <span className="flex items-center gap-1">
+                  Age <SortIcon field="property_age_years" currentField={sortField} direction={sortDirection} />
+                </span>
+              </th>
+              <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider">Disasters</th>
+              <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
+            </tr>
+          </thead>
+          <tbody>
+            {properties.map((p) => (
+              <>
+                <tr
+                  key={p.property_id}
+                  className={`border-b border-border hover:bg-muted/40 transition-colors cursor-pointer ${tierRowClass[p.priority_tier]}`}
+                  onClick={() => setExpandedId(expandedId === p.property_id ? null : p.property_id)}
+                >
+                  <td className="px-2 py-3 text-center">
+                    {expandedId === p.property_id ? (
+                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <ScoreBar score={p.total_priority_score} tier={p.priority_tier} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <TierBadge tier={p.priority_tier} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="max-w-[240px]">
+                      <p className="font-medium text-foreground truncate">{p.property_name_clean}</p>
+                      <p className="text-xs text-muted-foreground truncate">{p.city_clean}, NC {p.zip_code}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm">{p.county_clean}</td>
+                  <td className="px-4 py-3 text-sm tabular-nums">
+                    {p.property_age_years != null ? `${p.property_age_years}yr` : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <DisasterBadges property={p} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1.5">
+                      {p.is_subsidized_ind && (
+                        <span title="Subsidized" className="w-5 h-5 rounded-sm bg-[oklch(0.94_0.01_250)] flex items-center justify-center">
+                          <HomeIcon className="w-3 h-3 text-[oklch(0.40_0.06_250)]" />
+                        </span>
+                      )}
+                      {p.is_sec8_ind && (
+                        <span title="Section 8" className="w-5 h-5 rounded-sm bg-[oklch(0.94_0.01_250)] flex items-center justify-center">
+                          <Shield className="w-3 h-3 text-[oklch(0.40_0.06_250)]" />
+                        </span>
+                      )}
+                      {p.is_202_811_ind && (
+                        <span title="202/811 Elderly/Disabled" className="w-5 h-5 rounded-sm bg-[oklch(0.94_0.01_250)] flex items-center justify-center">
+                          <Users className="w-3 h-3 text-[oklch(0.40_0.06_250)]" />
+                        </span>
+                      )}
+                      {p.coastal_flood_zone && (
+                        <span title="Coastal Flood Zone" className="w-5 h-5 rounded-sm bg-[oklch(0.90_0.03_240)] flex items-center justify-center">
+                          <Droplets className="w-3 h-3 text-[oklch(0.45_0.15_240)]" />
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+                {expandedId === p.property_id && (
+                  <ExpandedRow key={`exp-${p.property_id}`} property={p} />
+                )}
+              </>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
