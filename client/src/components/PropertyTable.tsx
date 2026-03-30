@@ -1,4 +1,4 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase } from "lucide-react";
 import TierBadge from "./TierBadge";
 import ScoreBar from "./ScoreBar";
 import DisasterBadges from "./DisasterBadges";
@@ -35,7 +35,7 @@ function ExpandedRow({ property }: { property: Property }) {
   const p = property;
   return (
     <tr>
-      <td colSpan={11} className="bg-muted/30 px-6 py-4 border-b border-border">
+      <td colSpan={12} className="bg-muted/30 px-6 py-4 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
           {/* Property Details */}
           <div>
@@ -80,6 +80,22 @@ function ExpandedRow({ property }: { property: Property }) {
               <p><span className="text-muted-foreground">Assisted Units:</span> <span className="font-medium">{p.total_assisted_unit_count}</span></p>
               <p><span className="text-muted-foreground">Est. Stories:</span> <span className="font-medium">{p.est_stories}</span></p>
               <p><span className="text-muted-foreground">Est. Buildings:</span> <span className="font-medium">{p.est_buildings}</span></p>
+              {p.organization && (
+                <>
+                  <div className="mt-3 pt-2 border-t border-border/50">
+                    <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-1">Owner / Management</h4>
+                  </div>
+                  <p><span className="text-muted-foreground">Organization:</span> <span className="font-medium">{p.organization}</span></p>
+                  {p.mgmt_agent && p.mgmt_agent !== p.organization && (
+                    <p><span className="text-muted-foreground">Mgmt Agent:</span> <span className="font-medium">{p.mgmt_agent}</span></p>
+                  )}
+                  {p.owner_company && p.owner_company !== p.organization && (
+                    <p><span className="text-muted-foreground">Owner/Developer:</span> <span className="font-medium">{p.owner_company}</span></p>
+                  )}
+                  {p.mgmt_phone && <p><span className="text-muted-foreground">Phone:</span> {p.mgmt_phone}</p>}
+                  {p.mgmt_email && <p><span className="text-muted-foreground">Email:</span> {p.mgmt_email}</p>}
+                </>
+              )}
             </div>
           </div>
 
@@ -233,6 +249,14 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
               </th>
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Disasters</th>
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Structure</th>
+              <th
+                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => onSort("organization")}
+              >
+                <span className="flex items-center gap-1">
+                  Org <SortIcon field="organization" currentField={sortField} direction={sortDirection} />
+                </span>
+              </th>
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
             </tr>
           </thead>
@@ -297,6 +321,15 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                         {p.est_buildings}B
                       </span>
                     </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    {p.organization ? (
+                      <div className="max-w-[160px]">
+                        <p className="text-xs font-medium text-foreground truncate" title={p.organization}>{p.organization}</p>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex gap-1.5">

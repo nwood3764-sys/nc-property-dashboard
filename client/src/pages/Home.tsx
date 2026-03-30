@@ -14,6 +14,7 @@ import Pagination from "@/components/Pagination";
 import CountyChart from "@/components/CountyChart";
 import ScoreDistribution from "@/components/ScoreDistribution";
 import BuildingTypeChart from "@/components/BuildingTypeChart";
+import OrgChart from "@/components/OrgChart";
 import AgeVintageChart from "@/components/AgeVintageChart";
 import PropertyMap from "@/components/PropertyMap";
 import ExportButton from "@/components/ExportButton";
@@ -28,6 +29,7 @@ import {
   Home as HomeIcon,
   MapIcon,
   Calendar,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -41,6 +43,7 @@ export default function Home() {
     stats,
     countyBreakdown,
     buildingTypeBreakdown,
+    orgBreakdown,
     sortField,
     sortDirection,
     handleSort,
@@ -54,6 +57,7 @@ export default function Home() {
     uniqueCounties,
     uniqueCategories,
     uniqueBuildingTypes,
+    uniqueOrganizations,
   } = usePropertyData();
 
   const [showMap, setShowMap] = useState(true);
@@ -104,7 +108,7 @@ export default function Home() {
 
       <main className="container py-6 space-y-6">
         {/* Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           <MetricCard
             label="Total Properties"
             value={stats.total}
@@ -145,6 +149,13 @@ export default function Home() {
             icon={<TrendingUp className="w-5 h-5 text-white" />}
             accent="oklch(0.50 0.15 140)"
             sub={`${stats.lihtcOnlyCount} LIHTC-only / ${stats.hudLihtcOverlap} overlap`}
+          />
+          <MetricCard
+            label="Organizations"
+            value={stats.uniqueOrgs}
+            icon={<Users className="w-5 h-5 text-white" />}
+            accent="oklch(0.45 0.12 280)"
+            sub={`${stats.withOrg.toLocaleString()} with org data`}
           />
         </div>
 
@@ -212,11 +223,21 @@ export default function Home() {
 
         {/* Additional Charts */}
         {showCharts && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <CountyChart data={countyBreakdown} />
-            <ScoreDistribution properties={allFiltered} />
-            <BuildingTypeChart data={buildingTypeBreakdown} />
-          </div>
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <CountyChart data={countyBreakdown} />
+              <ScoreDistribution properties={allFiltered} />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <BuildingTypeChart data={buildingTypeBreakdown} />
+              <div className="bg-white border border-border rounded-sm shadow-sm p-4">
+                <h3 className="font-[Space_Grotesk] text-sm font-bold text-foreground mb-3">
+                  Top Organizations by Property Count
+                </h3>
+                <OrgChart data={orgBreakdown} />
+              </div>
+            </div>
+          </>
         )}
 
         {/* Filters */}
@@ -227,6 +248,7 @@ export default function Home() {
           uniqueCounties={uniqueCounties}
           uniqueCategories={uniqueCategories}
           uniqueBuildingTypes={uniqueBuildingTypes}
+          uniqueOrganizations={uniqueOrganizations}
           resultCount={allFiltered.length}
         />
 

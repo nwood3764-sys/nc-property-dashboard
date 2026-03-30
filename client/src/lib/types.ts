@@ -37,6 +37,14 @@ export interface Property {
   lng: number | null;
   is_lihtc?: boolean;
   lihtc_compliance?: string;
+  owner_company?: string;
+  owner_contact?: string;
+  mgmt_agent?: string;
+  mgmt_contact?: string;
+  mgmt_email?: string;
+  mgmt_phone?: string;
+  organization?: string;
+  organization_normalized?: string;
 }
 
 export type SortField =
@@ -49,7 +57,8 @@ export type SortField =
   | "weatherization_score"
   | "total_unit_count"
   | "est_stories"
-  | "est_buildings";
+  | "est_buildings"
+  | "organization";
 
 export type SortDirection = "asc" | "desc";
 
@@ -66,4 +75,5 @@ export interface Filters {
   floodZoneOnly: boolean;
   lihtcOnly: boolean;
   dataSource: string;
+  organizations: Set<string>;
 }

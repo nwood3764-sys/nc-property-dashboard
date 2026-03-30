@@ -17,6 +17,7 @@ const defaultFilters: Filters = {
   floodZoneOnly: false,
   lihtcOnly: false,
   dataSource: "all",
+  organizations: new Set<string>(),
 };
 
 export function usePropertyData() {
@@ -39,6 +40,17 @@ export function usePropertyData() {
     return Array.from(new Set(allProperties.map((p) => p.building_type))).filter(Boolean).sort();
   }, []);
 
+  const uniqueOrganizations = useMemo(() => {
+    const orgMap = new Map<string, number>();
+    allProperties.forEach((p) => {
+      const org = (p.organization || '').trim();
+      if (org) orgMap.set(org, (orgMap.get(org) || 0) + 1);
+    });
+    return Array.from(orgMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  }, []);
+
   // Apply filters
   const filteredProperties = useMemo(() => {
     let result = allProperties;
@@ -54,7 +66,8 @@ export function usePropertyData() {
           p.county_clean.toLowerCase().includes(q) ||
           String(p.zip_code).includes(q) ||
           String(p.property_id).includes(q) ||
-          (p.building_type && p.building_type.toLowerCase().includes(q))
+          (p.building_type && p.building_type.toLowerCase().includes(q)) ||
+          (p.organization && p.organization.toLowerCase().includes(q))
       );
     }
 
@@ -101,6 +114,11 @@ export function usePropertyData() {
     if (filters.dataSource === "hud") result = result.filter((p) => p.category_clean !== "LIHTC");
     else if (filters.dataSource === "lihtc") result = result.filter((p) => p.is_lihtc);
     else if (filters.dataSource === "both") result = result.filter((p) => p.is_lihtc && p.category_clean !== "LIHTC");
+
+    // Organization filter
+    if (filters.organizations.size > 0) {
+      result = result.filter((p) => p.organization && filters.organizations.has(p.organization));
+    }
 
     return result;
   }, [filters]);
@@ -151,6 +169,8 @@ export function usePropertyData() {
       lihtcOnlyCount: fp.filter((p) => p.category_clean === "LIHTC").length,
       hudOnlyCount: fp.filter((p) => !p.is_lihtc).length,
       hudLihtcOverlap: fp.filter((p) => p.is_lihtc && p.category_clean !== "LIHTC").length,
+      withOrg: fp.filter((p) => (p.organization || '').trim()).length,
+      uniqueOrgs: new Set(fp.filter((p) => (p.organization || '').trim()).map((p) => p.organization!)).size,
     };
   }, [filteredProperties]);
 
@@ -185,6 +205,25 @@ export function usePropertyData() {
       .sort((a, b) => b.count - a.count);
   }, [filteredProperties]);
 
+  // Organization breakdown for chart (top 20)
+  const orgBreakdown = useMemo(() => {
+    const map = new Map<string, { total: number; units: number; critical: number; high: number }>();
+    filteredProperties.forEach((p) => {
+      const org = (p.organization || '').trim();
+      if (!org) return;
+      if (!map.has(org)) map.set(org, { total: 0, units: 0, critical: 0, high: 0 });
+      const entry = map.get(org)!;
+      entry.total++;
+      entry.units += p.total_unit_count || 0;
+      if (p.priority_tier === 'Critical') entry.critical++;
+      else if (p.priority_tier === 'High') entry.high++;
+    });
+    return Array.from(map.entries())
+      .map(([org, data]) => ({ org, ...data }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 20);
+  }, [filteredProperties]);
+
   const handleSort = (field: SortField) => {
     if (field === sortField) {
       setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
@@ -211,6 +250,7 @@ export function usePropertyData() {
     stats,
     countyBreakdown,
     buildingTypeBreakdown,
+    orgBreakdown,
     sortField,
     sortDirection,
     handleSort,
@@ -224,5 +264,6 @@ export function usePropertyData() {
     uniqueCounties,
     uniqueCategories,
     uniqueBuildingTypes,
+    uniqueOrganizations,
   };
 }

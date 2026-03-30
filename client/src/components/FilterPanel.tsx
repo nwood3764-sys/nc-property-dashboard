@@ -11,6 +11,11 @@ import {
 import type { Filters } from "@/lib/types";
 import { useState } from "react";
 
+interface OrgOption {
+  name: string;
+  count: number;
+}
+
 interface FilterPanelProps {
   filters: Filters;
   updateFilter: (key: keyof Filters, value: any) => void;
@@ -18,6 +23,7 @@ interface FilterPanelProps {
   uniqueCounties: string[];
   uniqueCategories: string[];
   uniqueBuildingTypes: string[];
+  uniqueOrganizations: OrgOption[];
   resultCount: number;
 }
 
@@ -28,6 +34,7 @@ export default function FilterPanel({
   uniqueCounties,
   uniqueCategories,
   uniqueBuildingTypes,
+  uniqueOrganizations,
   resultCount,
 }: FilterPanelProps) {
   const [expanded, setExpanded] = useState(false);
@@ -75,7 +82,8 @@ export default function FilterPanel({
     filters.elderlyDisabledOnly ||
     filters.floodZoneOnly ||
     filters.lihtcOnly ||
-    filters.dataSource !== "all";
+    filters.dataSource !== "all" ||
+    filters.organizations.size > 0;
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm">
@@ -85,7 +93,7 @@ export default function FilterPanel({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by name, address, city, county, ZIP, or building type..."
+            placeholder="Search by name, address, city, county, ZIP, org..."
             value={filters.search}
             onChange={(e) => updateFilter("search", e.target.value)}
             className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
@@ -144,7 +152,7 @@ export default function FilterPanel({
 
       {/* Expanded filters */}
       {expanded && (
-        <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
           {/* Hurricane filter */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
@@ -232,6 +240,33 @@ export default function FilterPanel({
                 <SelectItem value="all">All categories</SelectItem>
                 {uniqueCategories.map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Organization filter */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+              Owner / Mgmt Agent
+            </label>
+            <Select
+              value={filters.organizations.size === 1 ? Array.from(filters.organizations)[0] : "all"}
+              onValueChange={(val) => {
+                if (val === "all") updateFilter("organizations", new Set<string>());
+                else updateFilter("organizations", new Set([val]));
+              }}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="All organizations" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="all">All organizations</SelectItem>
+                {uniqueOrganizations.slice(0, 50).map((o) => (
+                  <SelectItem key={o.name} value={o.name}>
+                    <span className="truncate">{o.name}</span>
+                    <span className="ml-1 text-muted-foreground">({o.count})</span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
