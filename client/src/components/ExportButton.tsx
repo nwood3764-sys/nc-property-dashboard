@@ -1,12 +1,21 @@
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Property } from "@/lib/types";
+import type { OutreachStatus } from "@/hooks/useOutreachStatus";
+
+const statusLabels: Record<OutreachStatus, string> = {
+  none: "Not Started",
+  contacted: "Contacted",
+  in_progress: "In Progress",
+  complete: "Complete",
+};
 
 interface ExportButtonProps {
   properties: Property[];
+  getOutreachStatus?: (id: number) => OutreachStatus;
 }
 
-export default function ExportButton({ properties }: ExportButtonProps) {
+export default function ExportButton({ properties, getOutreachStatus }: ExportButtonProps) {
   const handleExport = () => {
     const headers = [
       "Priority Score", "Tier", "Property Name", "Address", "City", "County", "ZIP",
@@ -16,7 +25,8 @@ export default function ExportButton({ properties }: ExportButtonProps) {
       "Helene", "Florence", "Matthew", "Dorian", "Flood Zone",
       "Age Score", "Disaster Score", "Flood Score", "Weatherization Score",
       "LIHTC", "Data Source",
-      "Organization", "Owner/Developer", "Mgmt Agent", "Mgmt Phone", "Mgmt Email"
+      "Organization", "Owner/Developer", "Mgmt Agent", "Mgmt Phone", "Mgmt Email",
+      "Outreach Status"
     ];
 
     const rows = properties.map((p) => [
@@ -56,6 +66,7 @@ export default function ExportButton({ properties }: ExportButtonProps) {
       `"${(p.mgmt_agent ?? "").replace(/"/g, '""')}"`,
       `"${p.mgmt_phone ?? ""}"`,
       `"${p.mgmt_email ?? ""}"`,
+      getOutreachStatus ? statusLabels[getOutreachStatus(p.property_id)] : "Not Started",
     ]);
 
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");

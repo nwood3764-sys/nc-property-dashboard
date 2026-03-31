@@ -111,6 +111,54 @@
   }
 }
 
+/* Print styles for org summary */
+@media print {
+  body {
+    font-size: 11px;
+    background: white !important;
+    color: black !important;
+  }
+  header, footer, .print\:hidden {
+    display: none !important;
+  }
+  nav, [data-slot="breadcrumb"] {
+    display: none !important;
+  }
+  /* Show org header and metrics */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  /* Force page breaks */
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  /* Hide interactive elements */
+  button:not([data-print-keep]),
+  select,
+  [data-slot="slider"] {
+    display: none !important;
+  }
+  /* Simplify cards */
+  .shadow-sm {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+  /* Ensure colors print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  @page {
+    margin: 0.5in;
+    size: landscape;
+  }
+}
+
 @layer components {
   .container {
     width: 100%;

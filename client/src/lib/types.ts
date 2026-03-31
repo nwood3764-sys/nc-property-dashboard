@@ -76,4 +76,6 @@ export interface Filters {
   lihtcOnly: boolean;
   dataSource: string;
   organizations: Set<string>;
+  ageRange: [number, number];
+  outreachStatus: string;
 }

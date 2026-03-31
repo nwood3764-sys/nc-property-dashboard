@@ -37,7 +37,10 @@ import {
   BadgeDollarSign,
   Briefcase,
   MapIcon,
+  Printer,
 } from "lucide-react";
+import { useOutreachStatus } from "@/hooks/useOutreachStatus";
+import OutreachBadge from "@/components/OutreachBadge";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -72,7 +75,7 @@ function ExpandedRow({ property }: { property: Property }) {
   const p = property;
   return (
     <tr>
-      <td colSpan={10} className="bg-muted/30 px-6 py-4 border-b border-border">
+      <td colSpan={11} className="bg-muted/30 px-6 py-4 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
           {/* Property Details */}
           <div>
@@ -173,6 +176,7 @@ export default function OrgDetail() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
+  const { getStatus, setStatus } = useOutreachStatus();
 
   // Get all properties for this org
   const orgProperties = useMemo(() => {
@@ -472,6 +476,13 @@ export default function OrgDetail() {
               {showMap ? "Hide Map" : "Show Map"}
             </button>
             <div className="flex-1 h-px bg-border" />
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 text-sm font-medium text-[oklch(0.30_0.06_250)] hover:text-[oklch(0.40_0.06_250)] transition-colors print:hidden"
+            >
+              <Printer className="w-4 h-4" />
+              Print Summary
+            </button>
           </div>
           {showMap && <PropertyMap properties={orgProperties} />}
         </div>
@@ -532,6 +543,7 @@ export default function OrgDetail() {
                   </th>
                   <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Disasters</th>
                   <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
+                  <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -612,6 +624,12 @@ export default function OrgDetail() {
                             </span>
                           )}
                         </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <OutreachBadge
+                          status={getStatus(p.property_id)}
+                          onChange={(s) => setStatus(p.property_id, s)}
+                        />
                       </td>
                     </tr>
                     {expandedId === p.property_id && (

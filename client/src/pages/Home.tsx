@@ -19,6 +19,7 @@ import AgeVintageChart from "@/components/AgeVintageChart";
 import PropertyMap from "@/components/PropertyMap";
 import ExportButton from "@/components/ExportButton";
 import ScoringMethodology from "@/components/ScoringMethodology";
+import { useOutreachStatus } from "@/hooks/useOutreachStatus";
 import {
   AlertTriangle,
   Building2,
@@ -30,6 +31,7 @@ import {
   MapIcon,
   Calendar,
   Users,
+  ClipboardCheck,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -62,6 +64,8 @@ export default function Home() {
 
   const [showMap, setShowMap] = useState(true);
   const [showCharts, setShowCharts] = useState(false);
+  const { getStatus, setStatus, getCounts } = useOutreachStatus();
+  const outreachCounts = getCounts();
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,7 +85,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <ExportButton properties={allFiltered} />
+          <ExportButton properties={allFiltered} getOutreachStatus={getStatus} />
         </div>
       </header>
 
@@ -108,7 +112,7 @@ export default function Home() {
 
       <main className="container py-6 space-y-6">
         {/* Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <MetricCard
             label="Total Properties"
             value={stats.total}
@@ -156,6 +160,13 @@ export default function Home() {
             icon={<Users className="w-5 h-5 text-white" />}
             accent="oklch(0.45 0.12 280)"
             sub={`${stats.withOrg.toLocaleString()} with org data`}
+          />
+          <MetricCard
+            label="Outreach Progress"
+            value={outreachCounts.complete}
+            icon={<ClipboardCheck className="w-5 h-5 text-white" />}
+            accent="oklch(0.45 0.15 155)"
+            sub={`${outreachCounts.contacted} contacted / ${outreachCounts.inProgress} in progress`}
           />
         </div>
 
@@ -258,6 +269,8 @@ export default function Home() {
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={handleSort}
+          getOutreachStatus={getStatus}
+          setOutreachStatus={setStatus}
         />
 
         {/* Pagination */}

@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Filters } from "@/lib/types";
+import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
 
 interface OrgOption {
@@ -83,7 +84,10 @@ export default function FilterPanel({
     filters.floodZoneOnly ||
     filters.lihtcOnly ||
     filters.dataSource !== "all" ||
-    filters.organizations.size > 0;
+    filters.organizations.size > 0 ||
+    filters.ageRange[0] > 0 ||
+    filters.ageRange[1] < 80 ||
+    filters.outreachStatus !== "all";
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm">
@@ -152,7 +156,7 @@ export default function FilterPanel({
 
       {/* Expanded filters */}
       {expanded && (
-        <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+        <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
           {/* Hurricane filter */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
@@ -291,6 +295,46 @@ export default function FilterPanel({
                 <SelectItem value="both">HUD + LIHTC Overlap</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Age Range Slider */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+              Property Age (Years)
+            </label>
+            <div className="pt-2 pb-1">
+              <Slider
+                min={0}
+                max={80}
+                step={5}
+                value={filters.ageRange}
+                onValueChange={(val) => updateFilter("ageRange", val as [number, number])}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+              <span>{filters.ageRange[0]}yr</span>
+              <span>{filters.ageRange[1] >= 80 ? "80+" : `${filters.ageRange[1]}yr`}</span>
+            </div>
+            <div className="mt-3">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+                Outreach Status
+              </label>
+              <Select
+                value={filters.outreachStatus}
+                onValueChange={(val) => updateFilter("outreachStatus", val)}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="none">Not Started</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="complete">Complete</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Boolean filters */}

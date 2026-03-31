@@ -3,7 +3,9 @@ import { useLocation } from "wouter";
 import TierBadge from "./TierBadge";
 import ScoreBar from "./ScoreBar";
 import DisasterBadges from "./DisasterBadges";
+import OutreachBadge from "./OutreachBadge";
 import type { Property, SortField, SortDirection } from "@/lib/types";
+import type { OutreachStatus } from "@/hooks/useOutreachStatus";
 import { useState } from "react";
 
 interface PropertyTableProps {
@@ -11,6 +13,8 @@ interface PropertyTableProps {
   sortField: SortField;
   sortDirection: SortDirection;
   onSort: (field: SortField) => void;
+  getOutreachStatus: (id: number) => OutreachStatus;
+  setOutreachStatus: (id: number, status: OutreachStatus) => void;
 }
 
 function SortIcon({ field, currentField, direction }: { field: SortField; currentField: SortField; direction: SortDirection }) {
@@ -36,7 +40,7 @@ function ExpandedRow({ property }: { property: Property }) {
   const p = property;
   return (
     <tr>
-      <td colSpan={12} className="bg-muted/30 px-6 py-4 border-b border-border">
+      <td colSpan={13} className="bg-muted/30 px-6 py-4 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
           {/* Property Details */}
           <div>
@@ -189,7 +193,7 @@ function ExpandedRow({ property }: { property: Property }) {
   );
 }
 
-export default function PropertyTable({ properties, sortField, sortDirection, onSort }: PropertyTableProps) {
+export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus }: PropertyTableProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [, setLocation] = useLocation();
 
@@ -260,6 +264,7 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                 </span>
               </th>
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
+              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -370,6 +375,12 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                         </span>
                       )}
                     </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    <OutreachBadge
+                      status={getOutreachStatus(p.property_id)}
+                      onChange={(s) => setOutreachStatus(p.property_id, s)}
+                    />
                   </td>
                 </tr>
                 {expandedId === p.property_id && (

@@ -18,6 +18,8 @@ const defaultFilters: Filters = {
   lihtcOnly: false,
   dataSource: "all",
   organizations: new Set<string>(),
+  ageRange: [0, 80],
+  outreachStatus: "all",
 };
 
 export function usePropertyData() {
@@ -118,6 +120,14 @@ export function usePropertyData() {
     // Organization filter
     if (filters.organizations.size > 0) {
       result = result.filter((p) => p.organization && filters.organizations.has(p.organization));
+    }
+
+    // Age range filter
+    if (filters.ageRange[0] > 0 || filters.ageRange[1] < 80) {
+      result = result.filter((p) => {
+        if (p.property_age_years == null) return filters.ageRange[0] === 0;
+        return p.property_age_years >= filters.ageRange[0] && p.property_age_years <= filters.ageRange[1];
+      });
     }
 
     return result;
