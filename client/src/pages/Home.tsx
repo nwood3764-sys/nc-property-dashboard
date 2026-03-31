@@ -19,6 +19,8 @@ import AgeVintageChart from "@/components/AgeVintageChart";
 import PropertyMap from "@/components/PropertyMap";
 import ExportButton from "@/components/ExportButton";
 import ScoringMethodology from "@/components/ScoringMethodology";
+import BulkActionBar from "@/components/BulkActionBar";
+import OutreachProgressDashboard from "@/components/OutreachProgressDashboard";
 import { useOutreachStatus } from "@/hooks/useOutreachStatus";
 import {
   AlertTriangle,
@@ -32,8 +34,9 @@ import {
   Calendar,
   Users,
   ClipboardCheck,
+  Activity,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663414053285/JQD4rA2CyVu8NYLQfUVcQm/hero-nc-properties-Y7pDgfAm2FyZMqQTf4db3A.webp";
 const HURRICANE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663414053285/JQD4rA2CyVu8NYLQfUVcQm/hurricane-impact-WmGfHhK8G8mV6xJCg5mTqW.webp";
@@ -64,8 +67,38 @@ export default function Home() {
 
   const [showMap, setShowMap] = useState(true);
   const [showCharts, setShowCharts] = useState(false);
-  const { getStatus, setStatus, getCounts } = useOutreachStatus();
+  const [showProgress, setShowProgress] = useState(false);
+  const { getStatus, setStatus, setBulkStatus, getCounts } = useOutreachStatus();
   const outreachCounts = getCounts();
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  const filteredIds = useMemo(() => allFiltered.map((p) => p.property_id), [allFiltered]);
+
+  const handleToggleSelect = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(new Set(filteredIds));
+  }, [filteredIds]);
+
+  const handleDeselectAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const handleBulkUpdate = useCallback(
+    (ids: number[], status: any) => {
+      setBulkStatus(ids, status);
+    },
+    [setBulkStatus]
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -170,6 +203,29 @@ export default function Home() {
           />
         </div>
 
+        {/* Outreach Progress Dashboard Toggle */}
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+            <button
+              onClick={() => setShowProgress(!showProgress)}
+              className="flex items-center gap-2 text-sm font-medium text-[oklch(0.30_0.06_250)] hover:text-[oklch(0.40_0.06_250)] transition-colors"
+            >
+              <Activity className="w-4 h-4" />
+              {showProgress ? "Hide Outreach Progress" : "Show Outreach Progress"}
+            </button>
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">
+              {outreachCounts.complete + outreachCounts.contacted + outreachCounts.inProgress} of {stats.total.toLocaleString()} touched
+            </span>
+          </div>
+          {showProgress && (
+            <OutreachProgressDashboard
+              properties={allFiltered}
+              getOutreachStatus={getStatus}
+            />
+          )}
+        </div>
+
         {/* Map Section */}
         <div>
           <div className="flex items-center gap-3 mb-3">
@@ -263,6 +319,17 @@ export default function Home() {
           resultCount={allFiltered.length}
         />
 
+        {/* Bulk Action Bar */}
+        <BulkActionBar
+          selectedIds={selectedIds}
+          filteredIds={filteredIds}
+          onToggleSelect={handleToggleSelect}
+          onSelectAll={handleSelectAll}
+          onDeselectAll={handleDeselectAll}
+          onBulkUpdate={handleBulkUpdate}
+          totalFiltered={allFiltered.length}
+        />
+
         {/* Property Table */}
         <PropertyTable
           properties={properties}
@@ -271,6 +338,8 @@ export default function Home() {
           onSort={handleSort}
           getOutreachStatus={getStatus}
           setOutreachStatus={setStatus}
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
         />
 
         {/* Pagination */}

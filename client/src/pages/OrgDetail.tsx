@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { useOutreachStatus } from "@/hooks/useOutreachStatus";
 import OutreachBadge from "@/components/OutreachBadge";
+import OrgPdfExport from "@/components/OrgPdfExport";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -476,13 +477,21 @@ export default function OrgDetail() {
               {showMap ? "Hide Map" : "Show Map"}
             </button>
             <div className="flex-1 h-px bg-border" />
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-2 text-sm font-medium text-[oklch(0.30_0.06_250)] hover:text-[oklch(0.40_0.06_250)] transition-colors print:hidden"
-            >
-              <Printer className="w-4 h-4" />
-              Print Summary
-            </button>
+            <div className="flex items-center gap-4 print:hidden">
+              <OrgPdfExport
+                orgName={orgName}
+                properties={orgProperties}
+                stats={stats}
+                getOutreachStatus={getStatus}
+              />
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-2 text-sm font-medium text-[oklch(0.30_0.06_250)] hover:text-[oklch(0.40_0.06_250)] transition-colors"
+              >
+                <Printer className="w-4 h-4" />
+                Print Summary
+              </button>
+            </div>
           </div>
           {showMap && <PropertyMap properties={orgProperties} />}
         </div>

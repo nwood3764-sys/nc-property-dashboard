@@ -15,6 +15,8 @@ interface PropertyTableProps {
   onSort: (field: SortField) => void;
   getOutreachStatus: (id: number) => OutreachStatus;
   setOutreachStatus: (id: number, status: OutreachStatus) => void;
+  selectedIds?: Set<number>;
+  onToggleSelect?: (id: number) => void;
 }
 
 function SortIcon({ field, currentField, direction }: { field: SortField; currentField: SortField; direction: SortDirection }) {
@@ -23,24 +25,24 @@ function SortIcon({ field, currentField, direction }: { field: SortField; curren
 }
 
 const buildingTypeIcons: Record<string, string> = {
-  "Group Home": "🏠",
-  "Townhome": "🏘️",
-  "Garden / Villa": "🏡",
-  "Garden Apartment": "🏡",
-  "Small Apartment": "🏢",
-  "Mid-Rise Apartment": "🏢",
-  "Large Apartment": "🏗️",
-  "High-Rise": "🏙️",
-  "Senior Housing": "🏥",
-  "Nursing / Healthcare": "🏥",
-  "Assisted Living": "🏥",
+  "Group Home": "\u{1F3E0}",
+  "Townhome": "\u{1F3D8}\uFE0F",
+  "Garden / Villa": "\u{1F3E1}",
+  "Garden Apartment": "\u{1F3E1}",
+  "Small Apartment": "\u{1F3E2}",
+  "Mid-Rise Apartment": "\u{1F3E2}",
+  "Large Apartment": "\u{1F3D7}\uFE0F",
+  "High-Rise": "\u{1F3D9}\uFE0F",
+  "Senior Housing": "\u{1F3E5}",
+  "Nursing / Healthcare": "\u{1F3E5}",
+  "Assisted Living": "\u{1F3E5}",
 };
 
 function ExpandedRow({ property }: { property: Property }) {
   const p = property;
   return (
     <tr>
-      <td colSpan={13} className="bg-muted/30 px-6 py-4 border-b border-border">
+      <td colSpan={14} className="bg-muted/30 px-6 py-4 border-b border-border">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
           {/* Property Details */}
           <div>
@@ -193,7 +195,7 @@ function ExpandedRow({ property }: { property: Property }) {
   );
 }
 
-export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus }: PropertyTableProps) {
+export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect }: PropertyTableProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [, setLocation] = useLocation();
 
@@ -204,12 +206,19 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
     Low: "row-low",
   };
 
+  const hasSelection = selectedIds !== undefined && onToggleSelect !== undefined;
+
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[oklch(0.22_0.06_250)] text-white">
+              {hasSelection && (
+                <th className="text-center px-2 py-3 w-8">
+                  <span className="sr-only">Select</span>
+                </th>
+              )}
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider w-8"></th>
               <th
                 className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
@@ -272,9 +281,19 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
               <>
                 <tr
                   key={p.property_id}
-                  className={`border-b border-border hover:bg-muted/40 transition-colors cursor-pointer ${tierRowClass[p.priority_tier]}`}
+                  className={`border-b border-border hover:bg-muted/40 transition-colors cursor-pointer ${tierRowClass[p.priority_tier]} ${hasSelection && selectedIds.has(p.property_id) ? "bg-[oklch(0.95_0.02_240)]" : ""}`}
                   onClick={() => setExpandedId(expandedId === p.property_id ? null : p.property_id)}
                 >
+                  {hasSelection && (
+                    <td className="px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(p.property_id)}
+                        onChange={() => onToggleSelect(p.property_id)}
+                        className="w-4 h-4 rounded border-border text-[oklch(0.40_0.06_250)] focus:ring-[oklch(0.40_0.06_250)] cursor-pointer"
+                      />
+                    </td>
+                  )}
                   <td className="px-2 py-3 text-center">
                     {expandedId === p.property_id ? (
                       <ChevronUp className="w-4 h-4 text-muted-foreground" />
@@ -307,12 +326,12 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                   </td>
                   <td className="px-3 py-3">
                     <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-sm bg-muted text-foreground whitespace-nowrap">
-                      <span>{buildingTypeIcons[p.building_type] || "🏢"}</span>
+                      <span>{buildingTypeIcons[p.building_type] || "\u{1F3E2}"}</span>
                       {p.building_type}
                     </span>
                   </td>
                   <td className="px-3 py-3 text-sm tabular-nums">
-                    {p.property_age_years != null ? `${p.property_age_years}yr` : "—"}
+                    {p.property_age_years != null ? `${p.property_age_years}yr` : "\u2014"}
                   </td>
                   <td className="px-3 py-3">
                     <DisasterBadges property={p} />
@@ -344,7 +363,7 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                         </button>
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">{"\u2014"}</span>
                     )}
                   </td>
                   <td className="px-3 py-3">

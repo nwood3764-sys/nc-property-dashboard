@@ -68,9 +68,26 @@ export function useOutreachStatus() {
     };
   }, [statuses]);
 
+  const setBulkStatus = useCallback(
+    (propertyIds: number[], status: OutreachStatus) => {
+      setStatuses((prev) => {
+        const next = { ...prev };
+        propertyIds.forEach((id) => {
+          if (status === "none") {
+            delete next[String(id)];
+          } else {
+            next[String(id)] = status;
+          }
+        });
+        return next;
+      });
+    },
+    []
+  );
+
   const clearAll = useCallback(() => {
     setStatuses({});
   }, []);
 
-  return { getStatus, setStatus, getCounts, clearAll, statuses };
+  return { getStatus, setStatus, setBulkStatus, getCounts, clearAll, statuses };
 }
