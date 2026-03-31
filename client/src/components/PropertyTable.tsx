@@ -1,4 +1,5 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase, ExternalLink } from "lucide-react";
+import { useLocation } from "wouter";
 import TierBadge from "./TierBadge";
 import ScoreBar from "./ScoreBar";
 import DisasterBadges from "./DisasterBadges";
@@ -85,7 +86,7 @@ function ExpandedRow({ property }: { property: Property }) {
                   <div className="mt-3 pt-2 border-t border-border/50">
                     <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-1">Owner / Management</h4>
                   </div>
-                  <p><span className="text-muted-foreground">Organization:</span> <span className="font-medium">{p.organization}</span></p>
+                  <p><span className="text-muted-foreground">Organization:</span> <a href={`/org/${encodeURIComponent(p.organization!)}`} onClick={(e) => e.stopPropagation()} className="font-medium text-[oklch(0.40_0.06_250)] hover:text-[oklch(0.30_0.06_250)] hover:underline transition-colors">{p.organization}</a></p>
                   {p.mgmt_agent && p.mgmt_agent !== p.organization && (
                     <p><span className="text-muted-foreground">Mgmt Agent:</span> <span className="font-medium">{p.mgmt_agent}</span></p>
                   )}
@@ -190,6 +191,7 @@ function ExpandedRow({ property }: { property: Property }) {
 
 export default function PropertyTable({ properties, sortField, sortDirection, onSort }: PropertyTableProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [, setLocation] = useLocation();
 
   const tierRowClass: Record<string, string> = {
     Critical: "row-critical",
@@ -325,7 +327,16 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                   <td className="px-3 py-3">
                     {p.organization ? (
                       <div className="max-w-[160px]">
-                        <p className="text-xs font-medium text-foreground truncate" title={p.organization}>{p.organization}</p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLocation(`/org/${encodeURIComponent(p.organization!)}`);
+                          }}
+                          className="text-xs font-medium text-[oklch(0.40_0.06_250)] hover:text-[oklch(0.30_0.06_250)] hover:underline truncate block max-w-full text-left transition-colors"
+                          title={`View all properties for ${p.organization}`}
+                        >
+                          {p.organization}
+                        </button>
                       </div>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>

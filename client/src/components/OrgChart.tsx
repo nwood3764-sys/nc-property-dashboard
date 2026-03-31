@@ -3,6 +3,8 @@
  * Design: Civic Blueprint — horizontal bar chart showing top organizations by property count
  */
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { useLocation } from "wouter";
+import { ExternalLink } from "lucide-react";
 
 interface OrgEntry {
   org: string;
@@ -19,6 +21,11 @@ interface OrgChartProps {
 const COLORS = ["#1a3c5e", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"];
 
 export default function OrgChart({ data }: OrgChartProps) {
+  const [, setLocation] = useLocation();
+
+  const navigateToOrg = (orgName: string) => {
+    setLocation(`/org/${encodeURIComponent(orgName)}`);
+  };
   if (data.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -84,7 +91,15 @@ export default function OrgChart({ data }: OrgChartProps) {
           <tbody>
             {data.map((d, i) => (
               <tr key={i} className="border-b border-border/50 hover:bg-muted/50">
-                <td className="py-1.5 px-2 font-medium text-foreground truncate max-w-[250px]" title={d.org}>{d.org}</td>
+                <td className="py-1.5 px-2 font-medium truncate max-w-[250px]" title={d.org}>
+                  <button
+                    onClick={() => navigateToOrg(d.org)}
+                    className="text-left text-[oklch(0.40_0.06_250)] hover:text-[oklch(0.30_0.06_250)] hover:underline transition-colors inline-flex items-center gap-1"
+                  >
+                    {d.org}
+                    <ExternalLink className="w-3 h-3 opacity-50" />
+                  </button>
+                </td>
                 <td className="text-right py-1.5 px-2 tabular-nums">{d.total}</td>
                 <td className="text-right py-1.5 px-2 tabular-nums">{d.units.toLocaleString()}</td>
                 <td className="text-right py-1.5 px-2 tabular-nums text-red-700 font-medium">{d.critical}</td>
