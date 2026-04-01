@@ -157,7 +157,7 @@ export default function BulkActionBar({
                     <button
                       key={m.id}
                       onClick={() => {
-                        onBulkAssign(Array.from(selectedIds), m.id);
+                        onBulkAssign(Array.from(selectedIds), String(m.id));
                         setShowAssignDropdown(false);
                         onDeselectAll();
                       }}

@@ -75,7 +75,7 @@ export default function AssignmentBadge({ assignedMember, team, onAssign }: Assi
           {team.map((member) => (
             <button
               key={member.id}
-              onClick={() => { onAssign(member.id); setOpen(false); }}
+              onClick={() => { onAssign(String(member.id)); setOpen(false); }}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-muted/50 transition-colors ${
                 assignedMember?.id === member.id ? "bg-muted/30 font-semibold" : ""
               }`}

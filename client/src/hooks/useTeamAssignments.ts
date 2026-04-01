@@ -1,88 +1,132 @@
 /*
  * Team Assignment Hook
- * Persists team members and per-property assignments to localStorage.
+ * Persists team members and per-property assignments to the backend database via tRPC.
  * Supports add/remove team members, assign/unassign properties, bulk assign, and workload stats.
  */
 
-import { useState, useCallback, useEffect, useMemo } from "react";
-
-const TEAM_KEY = "nc-property-team-members";
-const ASSIGN_KEY = "nc-property-assignments";
+import { useCallback, useMemo } from "react";
+import { trpc } from "@/lib/trpc";
 
 export interface TeamMember {
-  id: string;
+  id: number;
   name: string;
   color: string;
 }
 
 const TEAM_COLORS = [
-  "oklch(0.55 0.20 250)",  // blue
-  "oklch(0.55 0.20 150)",  // green
-  "oklch(0.55 0.20 25)",   // red
-  "oklch(0.55 0.20 50)",   // orange
-  "oklch(0.55 0.20 300)",  // purple
-  "oklch(0.55 0.20 180)",  // teal
-  "oklch(0.55 0.20 340)",  // pink
-  "oklch(0.55 0.20 80)",   // yellow-green
+  "oklch(0.55 0.20 250)", // blue
+  "oklch(0.55 0.20 150)", // green
+  "oklch(0.55 0.20 25)",  // red
+  "oklch(0.55 0.20 50)",  // orange
+  "oklch(0.55 0.20 300)", // purple
+  "oklch(0.55 0.20 180)", // teal
+  "oklch(0.55 0.20 340)", // pink
+  "oklch(0.55 0.20 80)",  // yellow-green
 ];
 
-function loadTeam(): TeamMember[] {
-  try {
-    const raw = localStorage.getItem(TEAM_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return [];
-}
-
-function saveTeam(team: TeamMember[]) {
-  try {
-    localStorage.setItem(TEAM_KEY, JSON.stringify(team));
-  } catch { /* ignore */ }
-}
-
-function loadAssignments(): Record<string, string> {
-  try {
-    const raw = localStorage.getItem(ASSIGN_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return {};
-}
-
-function saveAssignments(assignments: Record<string, string>) {
-  try {
-    localStorage.setItem(ASSIGN_KEY, JSON.stringify(assignments));
-  } catch { /* ignore */ }
-}
-
 export function useTeamAssignments() {
-  const [team, setTeam] = useState<TeamMember[]>(loadTeam);
-  const [assignments, setAssignments] = useState<Record<string, string>>(loadAssignments);
+  const utils = trpc.useUtils();
 
-  useEffect(() => { saveTeam(team); }, [team]);
-  useEffect(() => { saveAssignments(assignments); }, [assignments]);
+  // Queries
+  const { data: teamRows = [], isLoading: teamLoading } = trpc.team.getAll.useQuery();
+  const { data: assignmentMap = {}, isLoading: assignmentsLoading } = trpc.assignments.getAll.useQuery();
 
-  const addMember = useCallback((name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    setTeam((prev) => {
-      if (prev.some((m) => m.name.toLowerCase() === trimmed.toLowerCase())) return prev;
-      const color = TEAM_COLORS[prev.length % TEAM_COLORS.length];
-      const id = `tm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-      return [...prev, { id, name: trimmed, color }];
-    });
-  }, []);
+  // Map DB rows to TeamMember interface
+  const team: TeamMember[] = useMemo(
+    () => teamRows.map((r) => ({ id: r.id, name: r.name, color: r.color })),
+    [teamRows]
+  );
 
-  const removeMember = useCallback((memberId: string) => {
-    setTeam((prev) => prev.filter((m) => m.id !== memberId));
-    // Also remove all assignments for this member
-    setAssignments((prev) => {
-      const next: Record<string, string> = {};
-      for (const [propId, mId] of Object.entries(prev)) {
-        if (mId !== memberId) next[propId] = mId;
-      }
-      return next;
-    });
-  }, []);
+  // Assignments map: { propertyId string -> memberId number }
+  const assignments: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const [propId, memberId] of Object.entries(assignmentMap)) {
+      map[propId] = String(memberId);
+    }
+    return map;
+  }, [assignmentMap]);
+
+  // Mutations
+  const addMemberMutation = trpc.team.add.useMutation({
+    onSuccess: () => {
+      utils.team.getAll.invalidate();
+    },
+  });
+
+  const removeMemberMutation = trpc.team.remove.useMutation({
+    onSuccess: () => {
+      utils.team.getAll.invalidate();
+      utils.assignments.getAll.invalidate();
+    },
+  });
+
+  const assignMutation = trpc.assignments.assign.useMutation({
+    onMutate: async ({ propertyId, memberId }) => {
+      await utils.assignments.getAll.cancel();
+      const prev = utils.assignments.getAll.getData();
+      utils.assignments.getAll.setData(undefined, (old) => {
+        const next = { ...(old ?? {}) };
+        if (memberId === null) {
+          delete next[String(propertyId)];
+        } else {
+          next[String(propertyId)] = memberId;
+        }
+        return next;
+      });
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) utils.assignments.getAll.setData(undefined, context.prev);
+    },
+    onSettled: () => {
+      utils.assignments.getAll.invalidate();
+    },
+  });
+
+  const bulkAssignMutation = trpc.assignments.bulkAssign.useMutation({
+    onMutate: async ({ propertyIds, memberId }) => {
+      await utils.assignments.getAll.cancel();
+      const prev = utils.assignments.getAll.getData();
+      utils.assignments.getAll.setData(undefined, (old) => {
+        const next = { ...(old ?? {}) };
+        propertyIds.forEach((id) => {
+          if (memberId === null) {
+            delete next[String(id)];
+          } else {
+            next[String(id)] = memberId;
+          }
+        });
+        return next;
+      });
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) utils.assignments.getAll.setData(undefined, context.prev);
+    },
+    onSettled: () => {
+      utils.assignments.getAll.invalidate();
+    },
+  });
+
+  // Actions
+  const addMember = useCallback(
+    (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      // Check for duplicate names
+      if (team.some((m) => m.name.toLowerCase() === trimmed.toLowerCase())) return;
+      const color = TEAM_COLORS[team.length % TEAM_COLORS.length];
+      addMemberMutation.mutate({ name: trimmed, color });
+    },
+    [team, addMemberMutation]
+  );
+
+  const removeMember = useCallback(
+    (memberId: string) => {
+      removeMemberMutation.mutate({ memberId: Number(memberId) });
+    },
+    [removeMemberMutation]
+  );
 
   const getAssignment = useCallback(
     (propertyId: number): string | null => {
@@ -95,46 +139,36 @@ export function useTeamAssignments() {
     (propertyId: number): TeamMember | null => {
       const memberId = assignments[String(propertyId)];
       if (!memberId) return null;
-      return team.find((m) => m.id === memberId) || null;
+      return team.find((m) => String(m.id) === memberId) || null;
     },
     [assignments, team]
   );
 
   const assignProperty = useCallback(
     (propertyId: number, memberId: string | null) => {
-      setAssignments((prev) => {
-        const next = { ...prev };
-        if (memberId === null) {
-          delete next[String(propertyId)];
-        } else {
-          next[String(propertyId)] = memberId;
-        }
-        return next;
+      assignMutation.mutate({
+        propertyId,
+        memberId: memberId === null ? null : Number(memberId),
       });
     },
-    []
+    [assignMutation]
   );
 
   const bulkAssign = useCallback(
     (propertyIds: number[], memberId: string | null) => {
-      setAssignments((prev) => {
-        const next = { ...prev };
-        propertyIds.forEach((id) => {
-          if (memberId === null) {
-            delete next[String(id)];
-          } else {
-            next[String(id)] = memberId;
-          }
-        });
-        return next;
+      bulkAssignMutation.mutate({
+        propertyIds,
+        memberId: memberId === null ? null : Number(memberId),
       });
     },
-    []
+    [bulkAssignMutation]
   );
 
   const getWorkload = useMemo(() => {
     const workload: Record<string, number> = {};
-    team.forEach((m) => { workload[m.id] = 0; });
+    team.forEach((m) => {
+      workload[String(m.id)] = 0;
+    });
     Object.values(assignments).forEach((memberId) => {
       if (workload[memberId] !== undefined) workload[memberId]++;
     });
@@ -156,5 +190,6 @@ export function useTeamAssignments() {
     getWorkload,
     totalAssigned,
     assignments,
+    isLoading: teamLoading || assignmentsLoading,
   };
 }

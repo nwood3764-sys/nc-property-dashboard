@@ -114,7 +114,7 @@ export default function TeamPanel({ team, workload, totalAssigned, totalProperti
 
                     {/* Remove button */}
                     <button
-                      onClick={() => onRemoveMember(member.id)}
+                      onClick={() => onRemoveMember(String(member.id))}
                       className="opacity-0 group-hover:opacity-100 p-1 rounded-sm hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
                       title={`Remove ${member.name}`}
                     >

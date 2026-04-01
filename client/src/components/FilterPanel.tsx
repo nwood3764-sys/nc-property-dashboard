@@ -461,7 +461,7 @@ export default function FilterPanel({
                   <SelectItem value="all">All Properties</SelectItem>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
                   {team.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
+                    <SelectItem key={m.id} value={String(m.id)}>
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: m.color }} />
                         {m.name}
