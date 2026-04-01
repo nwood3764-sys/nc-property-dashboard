@@ -1,4 +1,5 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase, ExternalLink, Zap, Clock, Globe, Search as SearchIcon } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase, ExternalLink, Zap, Clock, Globe, Search as SearchIcon, Flame, Plug, GitCompare } from "lucide-react";
+import PropertyNoteEditor from "./PropertyNoteEditor";
 import { useLocation } from "wouter";
 import TierBadge from "./TierBadge";
 import ScoreBar from "./ScoreBar";
@@ -17,6 +18,10 @@ interface PropertyTableProps {
   setOutreachStatus: (id: number, status: OutreachStatus) => void;
   selectedIds?: Set<number>;
   onToggleSelect?: (id: number) => void;
+  getNote?: (id: number) => { text: string; updatedAt: string } | null;
+  setNote?: (id: number, text: string) => void;
+  compareIds?: Set<number>;
+  onToggleCompare?: (id: number) => void;
 }
 
 function SortIcon({ field, currentField, direction }: { field: SortField; currentField: SortField; direction: SortDirection }) {
@@ -38,12 +43,12 @@ const buildingTypeIcons: Record<string, string> = {
   "Assisted Living": "\u{1F3E5}",
 };
 
-function ExpandedRow({ property }: { property: Property }) {
+function ExpandedRow({ property, getNote, setNote }: { property: Property; getNote?: (id: number) => { text: string; updatedAt: string } | null; setNote?: (id: number, text: string) => void }) {
   const p = property;
   return (
     <tr>
-      <td colSpan={15} className="bg-muted/30 px-6 py-4 border-b border-border">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 text-sm">
+      <td colSpan={16} className="bg-muted/30 px-6 py-4 border-b border-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 text-sm">
           {/* Property Details */}
           <div>
             <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Property Details</h4>
@@ -138,6 +143,39 @@ function ExpandedRow({ property }: { property: Property }) {
                 <span className={`w-2 h-2 rounded-full ${p.is_lihtc ? "bg-[oklch(0.50_0.15_140)]" : "bg-gray-300"}`} />
                 <span className={p.is_lihtc ? "font-medium" : "text-muted-foreground"}>LIHTC</span>
               </div>
+            </div>
+          </div>
+
+          {/* Utilities & Heating */}
+          <div>
+            <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Utilities & Heating</h4>
+            <div className="space-y-1">
+              {p.electricUtility && (
+                <p className="flex items-center gap-1">
+                  <Plug className="w-3 h-3 text-amber-600" />
+                  <span className="text-muted-foreground">Electric:</span>
+                  <span className="font-medium text-xs">{p.electricUtility}</span>
+                </p>
+              )}
+              {p.electricRate != null && (
+                <p className="ml-4"><span className="text-muted-foreground">Rate:</span> <span className="font-medium">{(p.electricRate * 100).toFixed(1)}¢/kWh</span></p>
+              )}
+              {p.gasUtility && (
+                <p className="flex items-center gap-1">
+                  <Flame className="w-3 h-3 text-orange-500" />
+                  <span className="text-muted-foreground">Gas:</span>
+                  <span className="font-medium text-xs">{p.gasUtility}</span>
+                </p>
+              )}
+              {!p.hasGasService && (
+                <p className="text-xs text-muted-foreground italic">No gas service available</p>
+              )}
+              {p.heatingSystemEstimate && (
+                <p className="mt-1">
+                  <span className="text-muted-foreground">Heating (Est.):</span>
+                  <span className="font-medium ml-1 px-1.5 py-0.5 rounded-sm bg-orange-50 text-orange-800 text-xs">{p.heatingSystemEstimate}</span>
+                </p>
+              )}
             </div>
           </div>
 
@@ -266,13 +304,20 @@ function ExpandedRow({ property }: { property: Property }) {
               </div>
             </div>
           </div>
+
         </div>
+        {/* Notes section — full width below the grid */}
+        {setNote && (
+          <div className="mt-4 pt-3 border-t border-border/50">
+            <PropertyNoteEditor propertyId={p.property_id} note={getNote?.(p.property_id) ?? null} onSave={setNote} />
+          </div>
+        )}
       </td>
     </tr>
   );
 }
 
-export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect }: PropertyTableProps) {
+export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect, getNote, setNote, compareIds, onToggleCompare }: PropertyTableProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [, setLocation] = useLocation();
 
@@ -351,6 +396,11 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
               </th>
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Status</th>
+              {compareIds !== undefined && (
+                <th className="text-center px-2 py-3 font-semibold text-xs uppercase tracking-wider w-10">
+                  <GitCompare className="w-3.5 h-3.5 mx-auto" />
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -478,9 +528,25 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                       onChange={(s) => setOutreachStatus(p.property_id, s)}
                     />
                   </td>
+                  {compareIds !== undefined && onToggleCompare && (
+                    <td className="px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => onToggleCompare(p.property_id)}
+                        disabled={!compareIds.has(p.property_id) && compareIds.size >= 4}
+                        className={`w-6 h-6 rounded-sm flex items-center justify-center transition-colors ${
+                          compareIds.has(p.property_id)
+                            ? "bg-[oklch(0.40_0.06_250)] text-white"
+                            : "bg-muted text-muted-foreground hover:bg-[oklch(0.85_0.02_250)] disabled:opacity-30 disabled:cursor-not-allowed"
+                        }`}
+                        title={compareIds.has(p.property_id) ? "Remove from comparison" : "Add to comparison (max 4)"}
+                      >
+                        <GitCompare className="w-3 h-3" />
+                      </button>
+                    </td>
+                  )}
                 </tr>
                 {expandedId === p.property_id && (
-                  <ExpandedRow key={`exp-${p.property_id}`} property={p} />
+                  <ExpandedRow key={`exp-${p.property_id}`} property={p} getNote={getNote} setNote={setNote} />
                 )}
               </>
             ))}

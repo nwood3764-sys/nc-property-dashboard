@@ -21,7 +21,9 @@ import ExportButton from "@/components/ExportButton";
 import ScoringMethodology from "@/components/ScoringMethodology";
 import BulkActionBar from "@/components/BulkActionBar";
 import OutreachProgressDashboard from "@/components/OutreachProgressDashboard";
+import PropertyCompare from "@/components/PropertyCompare";
 import { useOutreachStatus } from "@/hooks/useOutreachStatus";
+import { usePropertyNotes } from "@/hooks/usePropertyNotes";
 import {
   AlertTriangle,
   Building2,
@@ -37,6 +39,10 @@ import {
   Activity,
   Clock,
   Zap,
+  GitCompare,
+  StickyNote,
+  Flame,
+  Plug,
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 
@@ -65,6 +71,8 @@ export default function Home() {
     uniqueCategories,
     uniqueBuildingTypes,
     uniqueOrganizations,
+    uniqueElectricUtilities,
+    uniqueHeatingTypes,
   } = usePropertyData();
 
   const [showMap, setShowMap] = useState(true);
@@ -72,6 +80,25 @@ export default function Home() {
   const [showProgress, setShowProgress] = useState(false);
   const { getStatus, setStatus, setBulkStatus, getCounts } = useOutreachStatus();
   const outreachCounts = getCounts();
+  const { getNote, setNote, getNotesCount } = usePropertyNotes();
+
+  // Comparison state
+  const [compareIds, setCompareIds] = useState<Set<number>>(new Set());
+  const [showCompare, setShowCompare] = useState(false);
+
+  const handleToggleCompare = useCallback((id: number) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < 4) next.add(id);
+      return next;
+    });
+  }, []);
+
+  const compareProperties = useMemo(
+    () => allFiltered.filter((p) => compareIds.has(p.property_id)),
+    [allFiltered, compareIds]
+  );
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -350,8 +377,33 @@ export default function Home() {
           uniqueCategories={uniqueCategories}
           uniqueBuildingTypes={uniqueBuildingTypes}
           uniqueOrganizations={uniqueOrganizations}
+          uniqueElectricUtilities={uniqueElectricUtilities}
+          uniqueHeatingTypes={uniqueHeatingTypes}
           resultCount={allFiltered.length}
         />
+
+        {/* Compare Bar */}
+        {compareIds.size > 0 && (
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-[oklch(0.94_0.02_250)] border border-[oklch(0.80_0.04_250)] rounded-sm">
+            <GitCompare className="w-4 h-4 text-[oklch(0.35_0.06_250)]" />
+            <span className="text-sm font-medium text-[oklch(0.30_0.06_250)]">
+              {compareIds.size} selected for comparison
+            </span>
+            <button
+              onClick={() => setShowCompare(true)}
+              disabled={compareIds.size < 2}
+              className="ml-2 px-3 py-1 text-xs font-semibold rounded-sm bg-[oklch(0.30_0.06_250)] text-white hover:bg-[oklch(0.25_0.06_250)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Compare ({compareIds.size})
+            </button>
+            <button
+              onClick={() => setCompareIds(new Set())}
+              className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {/* Bulk Action Bar */}
         <BulkActionBar
@@ -374,7 +426,29 @@ export default function Home() {
           setOutreachStatus={setStatus}
           selectedIds={selectedIds}
           onToggleSelect={handleToggleSelect}
+          getNote={getNote}
+          setNote={setNote}
+          compareIds={compareIds}
+          onToggleCompare={handleToggleCompare}
         />
+
+        {/* Comparison Modal */}
+        {showCompare && compareProperties.length >= 2 && (
+          <PropertyCompare
+            properties={compareProperties}
+            onRemove={(id) => {
+              setCompareIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+                if (next.size < 2) setShowCompare(false);
+                return next;
+              });
+            }}
+            onClose={() => setShowCompare(false)}
+            getOutreachStatus={getStatus}
+            getNote={getNote}
+          />
+        )}
 
         {/* Pagination */}
         <Pagination

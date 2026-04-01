@@ -25,6 +25,8 @@ interface FilterPanelProps {
   uniqueCategories: string[];
   uniqueBuildingTypes: string[];
   uniqueOrganizations: OrgOption[];
+  uniqueElectricUtilities: string[];
+  uniqueHeatingTypes: string[];
   resultCount: number;
 }
 
@@ -36,6 +38,8 @@ export default function FilterPanel({
   uniqueCategories,
   uniqueBuildingTypes,
   uniqueOrganizations,
+  uniqueElectricUtilities,
+  uniqueHeatingTypes,
   resultCount,
 }: FilterPanelProps) {
   const [expanded, setExpanded] = useState(false);
@@ -89,7 +93,10 @@ export default function FilterPanel({
     filters.ageRange[1] < 80 ||
     filters.outreachStatus !== "all" ||
     filters.expiringWithinYears != null ||
-    filters.highEnergyBurden;
+    filters.highEnergyBurden ||
+    filters.electricUtilities.size > 0 ||
+    filters.heatingTypes.size > 0 ||
+    filters.hasGasService !== "all";
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm">
@@ -366,6 +373,70 @@ export default function FilterPanel({
                 />
                 High Energy Burden (4%+)
               </label>
+            </div>
+          </div>
+
+          {/* Electric Utility */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+              Electric Utility
+            </label>
+            <Select
+              value={filters.electricUtilities.size === 1 ? Array.from(filters.electricUtilities)[0] : "all"}
+              onValueChange={(val) => {
+                if (val === "all") updateFilter("electricUtilities", new Set<string>());
+                else updateFilter("electricUtilities", new Set([val]));
+              }}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="All utilities" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="all">All Utilities</SelectItem>
+                {uniqueElectricUtilities.map((u) => (
+                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="mt-3">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+                Heating System
+              </label>
+              <Select
+                value={filters.heatingTypes.size === 1 ? Array.from(filters.heatingTypes)[0] : "all"}
+                onValueChange={(val) => {
+                  if (val === "all") updateFilter("heatingTypes", new Set<string>());
+                  else updateFilter("heatingTypes", new Set([val]));
+                }}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectItem value="all">All Heating Types</SelectItem>
+                  {uniqueHeatingTypes.map((h) => (
+                    <SelectItem key={h} value={h}>{h}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mt-3">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+                Gas Service
+              </label>
+              <Select
+                value={filters.hasGasService}
+                onValueChange={(val) => updateFilter("hasGasService", val)}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="yes">Has Gas Service</SelectItem>
+                  <SelectItem value="no">No Gas Service</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

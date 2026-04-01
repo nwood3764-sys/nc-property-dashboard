@@ -22,6 +22,9 @@ const defaultFilters: Filters = {
   outreachStatus: "all",
   expiringWithinYears: null,
   highEnergyBurden: false,
+  electricUtilities: new Set<string>(),
+  heatingTypes: new Set<string>(),
+  hasGasService: "all",
 };
 
 export function usePropertyData() {
@@ -42,6 +45,14 @@ export function usePropertyData() {
 
   const uniqueBuildingTypes = useMemo(() => {
     return Array.from(new Set(allProperties.map((p) => p.building_type))).filter(Boolean).sort();
+  }, []);
+
+  const uniqueElectricUtilities = useMemo(() => {
+    return Array.from(new Set(allProperties.map((p) => p.electricUtility).filter(Boolean) as string[])).sort();
+  }, []);
+
+  const uniqueHeatingTypes = useMemo(() => {
+    return Array.from(new Set(allProperties.map((p) => p.heatingSystemEstimate).filter(Boolean) as string[])).sort();
   }, []);
 
   const uniqueOrganizations = useMemo(() => {
@@ -144,6 +155,20 @@ export function usePropertyData() {
     if (filters.highEnergyBurden) {
       result = result.filter((p) => (p.energyBurdenPct ?? 0) >= 4.0);
     }
+
+    // Electric utility filter
+    if (filters.electricUtilities.size > 0) {
+      result = result.filter((p) => p.electricUtility && filters.electricUtilities.has(p.electricUtility));
+    }
+
+    // Heating type filter
+    if (filters.heatingTypes.size > 0) {
+      result = result.filter((p) => p.heatingSystemEstimate && filters.heatingTypes.has(p.heatingSystemEstimate));
+    }
+
+    // Gas service filter
+    if (filters.hasGasService === "yes") result = result.filter((p) => p.hasGasService);
+    else if (filters.hasGasService === "no") result = result.filter((p) => !p.hasGasService);
 
     return result;
   }, [filters]);
@@ -307,5 +332,7 @@ export function usePropertyData() {
     uniqueCategories,
     uniqueBuildingTypes,
     uniqueOrganizations,
+    uniqueElectricUtilities,
+    uniqueHeatingTypes,
   };
 }

@@ -45,17 +45,25 @@ export interface Property {
   mgmt_phone?: string;
   organization?: string;
   organization_normalized?: string;
-  // New enrichment fields
+  // Contract & energy enrichment
   contractExpiration?: string | null;
   contractNumber?: string | null;
   yearsUntilExpiration?: number | null;
   energyBurdenPct?: number | null;
   avgMonthlyEnergy?: number | null;
+  // Profile links
   nhpdLink?: string | null;
   affordableHousingLink?: string | null;
   hudProfileLink?: string | null;
   nchfaLink?: string | null;
   googleSearchLink?: string | null;
+  // Utility & heating system
+  electricUtility?: string | null;
+  electricUtilityType?: string | null;
+  electricRate?: number | null;
+  gasUtility?: string | null;
+  hasGasService?: boolean;
+  heatingSystemEstimate?: string | null;
 }
 
 export type SortField =
@@ -71,7 +79,9 @@ export type SortField =
   | "est_buildings"
   | "organization"
   | "energyBurdenPct"
-  | "yearsUntilExpiration";
+  | "yearsUntilExpiration"
+  | "electricUtility"
+  | "heatingSystemEstimate";
 
 export type SortDirection = "asc" | "desc";
 
@@ -93,4 +103,7 @@ export interface Filters {
   outreachStatus: string;
   expiringWithinYears: number | null;
   highEnergyBurden: boolean;
+  electricUtilities: Set<string>;
+  heatingTypes: Set<string>;
+  hasGasService: string; // "all" | "yes" | "no"
 }

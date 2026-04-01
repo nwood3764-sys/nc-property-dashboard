@@ -28,6 +28,8 @@ export default function ExportButton({ properties, getOutreachStatus }: ExportBu
       "Organization", "Owner/Developer", "Mgmt Agent", "Mgmt Phone", "Mgmt Email",
       "Contract #", "Contract Expiration", "Years Until Expiration",
       "Energy Burden %", "Avg Monthly Energy $",
+      "Electric Utility", "Electric Rate ($/kWh)", "Gas Utility", "Has Gas Service",
+      "Heating System (Est.)",
       "NHPD Link", "AffordableHousing Link", "HUD Profile Link", "NCHFA Link", "Google Search Link",
       "Outreach Status"
     ];
@@ -74,6 +76,11 @@ export default function ExportButton({ properties, getOutreachStatus }: ExportBu
       p.yearsUntilExpiration ?? "",
       p.energyBurdenPct ?? "",
       p.avgMonthlyEnergy ?? "",
+      `"${(p.electricUtility ?? "").replace(/"/g, '""')}"`,
+      p.electricRate ?? "",
+      `"${(p.gasUtility ?? "").replace(/"/g, '""')}"`,
+      p.hasGasService ? "Y" : "N",
+      `"${(p.heatingSystemEstimate ?? "").replace(/"/g, '""')}"`,
       `"${p.nhpdLink ?? ""}"`,
       `"${p.affordableHousingLink ?? ""}"`,
       `"${p.hudProfileLink ?? ""}"`,
