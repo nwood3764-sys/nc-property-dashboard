@@ -1,24 +1,52 @@
 /*
  * Outreach Tracking Hook
- * Persists per-property outreach status to the backend database via tRPC.
+ * Persists per-property outreach status to localStorage.
  * Statuses: "none" | "contacted" | "in_progress" | "complete"
  */
 
-import { useCallback, useMemo } from "react";
-import { trpc } from "@/lib/trpc";
+import { useState, useCallback, useEffect } from "react";
 
 export type OutreachStatus = "none" | "contacted" | "in_progress" | "complete";
 
-export function useOutreachStatus() {
-  const utils = trpc.useUtils();
-  const { data: statusMap = {}, isLoading } = trpc.outreach.getAll.useQuery();
+const STORAGE_KEY = "nc-property-outreach-status";
 
-  const setStatusMutation = trpc.outreach.setStatus.useMutation({
-    onMutate: async ({ propertyId, status }) => {
-      await utils.outreach.getAll.cancel();
-      const prev = utils.outreach.getAll.getData();
-      utils.outreach.getAll.setData(undefined, (old) => {
-        const next = { ...(old ?? {}) };
+function loadStatuses(): Record<string, OutreachStatus> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function saveStatuses(statuses: Record<string, OutreachStatus>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(statuses));
+  } catch {
+    // ignore
+  }
+}
+
+export function useOutreachStatus() {
+  const [statuses, setStatuses] = useState<Record<string, OutreachStatus>>(loadStatuses);
+
+  // Sync to localStorage whenever statuses change
+  useEffect(() => {
+    saveStatuses(statuses);
+  }, [statuses]);
+
+  const getStatus = useCallback(
+    (propertyId: number): OutreachStatus => {
+      return statuses[String(propertyId)] || "none";
+    },
+    [statuses]
+  );
+
+  const setStatus = useCallback(
+    (propertyId: number, status: OutreachStatus) => {
+      setStatuses((prev) => {
+        const next = { ...prev };
         if (status === "none") {
           delete next[String(propertyId)];
         } else {
@@ -26,22 +54,24 @@ export function useOutreachStatus() {
         }
         return next;
       });
-      return { prev };
     },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) utils.outreach.getAll.setData(undefined, context.prev);
-    },
-    onSettled: () => {
-      utils.outreach.getAll.invalidate();
-    },
-  });
+    []
+  );
 
-  const bulkSetStatusMutation = trpc.outreach.bulkSetStatus.useMutation({
-    onMutate: async ({ propertyIds, status }) => {
-      await utils.outreach.getAll.cancel();
-      const prev = utils.outreach.getAll.getData();
-      utils.outreach.getAll.setData(undefined, (old) => {
-        const next = { ...(old ?? {}) };
+  const getCounts = useCallback(() => {
+    const values = Object.values(statuses);
+    return {
+      contacted: values.filter((s) => s === "contacted").length,
+      inProgress: values.filter((s) => s === "in_progress").length,
+      complete: values.filter((s) => s === "complete").length,
+      total: values.length,
+    };
+  }, [statuses]);
+
+  const setBulkStatus = useCallback(
+    (propertyIds: number[], status: OutreachStatus) => {
+      setStatuses((prev) => {
+        const next = { ...prev };
         propertyIds.forEach((id) => {
           if (status === "none") {
             delete next[String(id)];
@@ -51,50 +81,13 @@ export function useOutreachStatus() {
         });
         return next;
       });
-      return { prev };
     },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) utils.outreach.getAll.setData(undefined, context.prev);
-    },
-    onSettled: () => {
-      utils.outreach.getAll.invalidate();
-    },
-  });
-
-  const getStatus = useCallback(
-    (propertyId: number): OutreachStatus => {
-      return (statusMap[String(propertyId)] as OutreachStatus) || "none";
-    },
-    [statusMap]
+    []
   );
-
-  const setStatus = useCallback(
-    (propertyId: number, status: OutreachStatus) => {
-      setStatusMutation.mutate({ propertyId, status });
-    },
-    [setStatusMutation]
-  );
-
-  const setBulkStatus = useCallback(
-    (propertyIds: number[], status: OutreachStatus) => {
-      bulkSetStatusMutation.mutate({ propertyIds, status });
-    },
-    [bulkSetStatusMutation]
-  );
-
-  const getCounts = useCallback(() => {
-    const values = Object.values(statusMap);
-    return {
-      contacted: values.filter((s) => s === "contacted").length,
-      inProgress: values.filter((s) => s === "in_progress").length,
-      complete: values.filter((s) => s === "complete").length,
-      total: values.length,
-    };
-  }, [statusMap]);
 
   const clearAll = useCallback(() => {
-    // Not commonly used, but available
+    setStatuses({});
   }, []);
 
-  return { getStatus, setStatus, setBulkStatus, getCounts, clearAll, statuses: statusMap, isLoading };
+  return { getStatus, setStatus, setBulkStatus, getCounts, clearAll, statuses };
 }

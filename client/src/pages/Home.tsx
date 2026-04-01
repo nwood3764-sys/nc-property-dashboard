@@ -7,7 +7,6 @@
  */
 
 import { usePropertyData } from "@/hooks/usePropertyData";
-import { useTeamAssignments } from "@/hooks/useTeamAssignments";
 import MetricCard from "@/components/MetricCard";
 import FilterPanel from "@/components/FilterPanel";
 import PropertyTable from "@/components/PropertyTable";
@@ -23,7 +22,6 @@ import ScoringMethodology from "@/components/ScoringMethodology";
 import BulkActionBar from "@/components/BulkActionBar";
 import OutreachProgressDashboard from "@/components/OutreachProgressDashboard";
 import PropertyCompare from "@/components/PropertyCompare";
-import TeamPanel from "@/components/TeamPanel";
 import { useOutreachStatus } from "@/hooks/useOutreachStatus";
 import { usePropertyNotes } from "@/hooks/usePropertyNotes";
 import {
@@ -84,37 +82,6 @@ export default function Home() {
   const outreachCounts = getCounts();
   const { getNote, setNote, getNotesCount } = usePropertyNotes();
 
-  // Team assignments
-  const {
-    team,
-    assignments,
-    addMember,
-    removeMember,
-    assignProperty,
-    bulkAssign,
-    getAssignedMember,
-    getWorkload,
-    totalAssigned,
-  } = useTeamAssignments();
-
-  // Apply assignedTo filter on top of the already-filtered data
-  const assignmentFiltered = useMemo(() => {
-    if (filters.assignedTo === "all") return allFiltered;
-    if (filters.assignedTo === "unassigned") {
-      return allFiltered.filter((p) => !assignments[String(p.property_id)]);
-    }
-    // Filter to specific team member
-    return allFiltered.filter((p) => assignments[String(p.property_id)] === filters.assignedTo);
-  }, [allFiltered, filters.assignedTo, assignments]);
-
-  // Paginate the assignment-filtered data
-  const assignmentFilteredPage = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return assignmentFiltered.slice(start, start + pageSize);
-  }, [assignmentFiltered, page, pageSize]);
-
-  const assignmentTotalPages = Math.ceil(assignmentFiltered.length / pageSize);
-
   // Comparison state
   const [compareIds, setCompareIds] = useState<Set<number>>(new Set());
   const [showCompare, setShowCompare] = useState(false);
@@ -129,14 +96,14 @@ export default function Home() {
   }, []);
 
   const compareProperties = useMemo(
-    () => assignmentFiltered.filter((p) => compareIds.has(p.property_id)),
-    [assignmentFiltered, compareIds]
+    () => allFiltered.filter((p) => compareIds.has(p.property_id)),
+    [allFiltered, compareIds]
   );
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
-  const filteredIds = useMemo(() => assignmentFiltered.map((p) => p.property_id), [assignmentFiltered]);
+  const filteredIds = useMemo(() => allFiltered.map((p) => p.property_id), [allFiltered]);
 
   const handleToggleSelect = useCallback((id: number) => {
     setSelectedIds((prev) => {
@@ -162,13 +129,6 @@ export default function Home() {
     [setBulkStatus]
   );
 
-  const handleBulkAssign = useCallback(
-    (ids: number[], memberId: string | null) => {
-      bulkAssign(ids, memberId);
-    },
-    [bulkAssign]
-  );
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -187,7 +147,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <ExportButton properties={assignmentFiltered} getOutreachStatus={getStatus} getAssignedMember={getAssignedMember} />
+          <ExportButton properties={allFiltered} getOutreachStatus={getStatus} />
         </div>
       </header>
 
@@ -304,16 +264,6 @@ export default function Home() {
           />
         </div>
 
-        {/* Team Panel */}
-        <TeamPanel
-          team={team}
-          workload={getWorkload}
-          totalAssigned={totalAssigned}
-          totalProperties={assignmentFiltered.length}
-          onAddMember={addMember}
-          onRemoveMember={removeMember}
-        />
-
         {/* Outreach Progress Dashboard Toggle */}
         <div>
           <div className="flex items-center gap-3 mb-3">
@@ -331,12 +281,8 @@ export default function Home() {
           </div>
           {showProgress && (
             <OutreachProgressDashboard
-              properties={assignmentFiltered}
+              properties={allFiltered}
               getOutreachStatus={getStatus}
-              team={team}
-              getAssignedMember={getAssignedMember}
-              workload={getWorkload}
-              totalAssigned={totalAssigned}
             />
           )}
         </div>
@@ -353,10 +299,10 @@ export default function Home() {
             </button>
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-muted-foreground">
-              Filtered: {assignmentFiltered.length.toLocaleString()} properties
+              Filtered: {allFiltered.length.toLocaleString()} properties
             </span>
           </div>
-          {showMap && <PropertyMap properties={assignmentFiltered} />}
+          {showMap && <PropertyMap properties={allFiltered} />}
         </div>
 
         {/* Disaster Context Banner */}
@@ -386,7 +332,7 @@ export default function Home() {
         </div>
 
         {/* Age Vintage Chart — always visible as a key metric */}
-        <AgeVintageChart properties={assignmentFiltered} />
+        <AgeVintageChart properties={allFiltered} />
 
         {/* Scoring Methodology */}
         <ScoringMethodology />
@@ -408,7 +354,7 @@ export default function Home() {
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <CountyChart data={countyBreakdown} />
-              <ScoreDistribution properties={assignmentFiltered} />
+              <ScoreDistribution properties={allFiltered} />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <BuildingTypeChart data={buildingTypeBreakdown} />
@@ -433,8 +379,7 @@ export default function Home() {
           uniqueOrganizations={uniqueOrganizations}
           uniqueElectricUtilities={uniqueElectricUtilities}
           uniqueHeatingTypes={uniqueHeatingTypes}
-          resultCount={assignmentFiltered.length}
-          team={team}
+          resultCount={allFiltered.length}
         />
 
         {/* Compare Bar */}
@@ -468,14 +413,12 @@ export default function Home() {
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
           onBulkUpdate={handleBulkUpdate}
-          totalFiltered={assignmentFiltered.length}
-          team={team}
-          onBulkAssign={handleBulkAssign}
+          totalFiltered={allFiltered.length}
         />
 
         {/* Property Table */}
         <PropertyTable
-          properties={assignmentFilteredPage}
+          properties={properties}
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={handleSort}
@@ -487,9 +430,6 @@ export default function Home() {
           setNote={setNote}
           compareIds={compareIds}
           onToggleCompare={handleToggleCompare}
-          team={team}
-          getAssignedMember={getAssignedMember}
-          onAssignProperty={assignProperty}
         />
 
         {/* Comparison Modal */}
@@ -513,9 +453,9 @@ export default function Home() {
         {/* Pagination */}
         <Pagination
           page={page}
-          totalPages={assignmentTotalPages}
+          totalPages={totalPages}
           onPageChange={setPage}
-          totalItems={assignmentFiltered.length}
+          totalItems={allFiltered.length}
           pageSize={pageSize}
         />
 

@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Filters } from "@/lib/types";
-import type { TeamMember } from "@/hooks/useTeamAssignments";
 import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
 
@@ -29,7 +28,6 @@ interface FilterPanelProps {
   uniqueElectricUtilities: string[];
   uniqueHeatingTypes: string[];
   resultCount: number;
-  team?: TeamMember[];
 }
 
 export default function FilterPanel({
@@ -43,7 +41,6 @@ export default function FilterPanel({
   uniqueElectricUtilities,
   uniqueHeatingTypes,
   resultCount,
-  team,
 }: FilterPanelProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -99,8 +96,7 @@ export default function FilterPanel({
     filters.highEnergyBurden ||
     filters.electricUtilities.size > 0 ||
     filters.heatingTypes.size > 0 ||
-    filters.hasGasService !== "all" ||
-    filters.assignedTo !== "all";
+    filters.hasGasService !== "all";
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm">
@@ -443,35 +439,6 @@ export default function FilterPanel({
               </Select>
             </div>
           </div>
-
-          {/* Assigned To filter */}
-          {team && team.length > 0 && (
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
-                Assigned To
-              </label>
-              <Select
-                value={filters.assignedTo}
-                onValueChange={(val) => updateFilter("assignedTo", val)}
-              >
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue placeholder="All" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Properties</SelectItem>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {team.map((m) => (
-                    <SelectItem key={m.id} value={String(m.id)}>
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: m.color }} />
-                        {m.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           {/* Boolean filters */}
           <div>

@@ -1,6 +1,4 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase, ExternalLink, Zap, Clock, Globe, Search as SearchIcon, Flame, Plug, GitCompare, UserCheck } from "lucide-react";
-import AssignmentBadge from "./AssignmentBadge";
-import type { TeamMember } from "@/hooks/useTeamAssignments";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase, ExternalLink, Zap, Clock, Globe, Search as SearchIcon, Flame, Plug, GitCompare } from "lucide-react";
 import PropertyNoteEditor from "./PropertyNoteEditor";
 import { useLocation } from "wouter";
 import TierBadge from "./TierBadge";
@@ -24,9 +22,6 @@ interface PropertyTableProps {
   setNote?: (id: number, text: string) => void;
   compareIds?: Set<number>;
   onToggleCompare?: (id: number) => void;
-  team?: TeamMember[];
-  getAssignedMember?: (id: number) => TeamMember | null;
-  onAssignProperty?: (propertyId: number, memberId: string | null) => void;
 }
 
 function SortIcon({ field, currentField, direction }: { field: SortField; currentField: SortField; direction: SortDirection }) {
@@ -322,7 +317,7 @@ function ExpandedRow({ property, getNote, setNote }: { property: Property; getNo
   );
 }
 
-export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect, getNote, setNote, compareIds, onToggleCompare, team, getAssignedMember, onAssignProperty }: PropertyTableProps) {
+export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect, getNote, setNote, compareIds, onToggleCompare }: PropertyTableProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [, setLocation] = useLocation();
 
@@ -401,13 +396,6 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
               </th>
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Status</th>
-              {team && team.length > 0 && (
-                <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">
-                  <span className="flex items-center gap-1">
-                    <UserCheck className="w-3 h-3" /> Assigned
-                  </span>
-                </th>
-              )}
               {compareIds !== undefined && (
                 <th className="text-center px-2 py-3 font-semibold text-xs uppercase tracking-wider w-10">
                   <GitCompare className="w-3.5 h-3.5 mx-auto" />
@@ -540,15 +528,6 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                       onChange={(s) => setOutreachStatus(p.property_id, s)}
                     />
                   </td>
-                  {team && team.length > 0 && getAssignedMember && onAssignProperty && (
-                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                      <AssignmentBadge
-                        assignedMember={getAssignedMember(p.property_id)}
-                        team={team}
-                        onAssign={(memberId) => onAssignProperty(p.property_id, memberId)}
-                      />
-                    </td>
-                  )}
                   {compareIds !== undefined && onToggleCompare && (
                     <td className="px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <button

@@ -6,16 +6,11 @@
 import { useMemo } from "react";
 import type { Property } from "@/lib/types";
 import type { OutreachStatus } from "@/hooks/useOutreachStatus";
-import type { TeamMember } from "@/hooks/useTeamAssignments";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface OutreachProgressDashboardProps {
   properties: Property[];
   getOutreachStatus: (id: number) => OutreachStatus;
-  team?: TeamMember[];
-  getAssignedMember?: (id: number) => TeamMember | null;
-  workload?: Record<string, number>;
-  totalAssigned?: number;
 }
 
 interface ProgressEntry {
@@ -97,7 +92,7 @@ function ProgressTable({ data, label }: { data: ProgressEntry[]; label: string }
   );
 }
 
-export default function OutreachProgressDashboard({ properties, getOutreachStatus, team, getAssignedMember, workload, totalAssigned }: OutreachProgressDashboardProps) {
+export default function OutreachProgressDashboard({ properties, getOutreachStatus }: OutreachProgressDashboardProps) {
   // Overall stats
   const overallStats = useMemo(() => {
     let contacted = 0, inProgress = 0, complete = 0, notStarted = 0;
@@ -239,70 +234,6 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
             ))}
           </div>
         </div>
-
-        {/* Team Workload Section */}
-        {team && team.length > 0 && getAssignedMember && workload && (
-          <div>
-            <h4 className="font-[Space_Grotesk] text-sm font-bold text-foreground mb-3">
-              Team Workload Distribution
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
-              {team.map((member) => {
-                const assigned = workload[member.id] || 0;
-                // Count statuses for this member's assigned properties
-                let memberComplete = 0, memberInProgress = 0, memberContacted = 0, memberNotStarted = 0;
-                properties.forEach((p) => {
-                  const am = getAssignedMember(p.property_id);
-                  if (am?.id === member.id) {
-                    const s = getOutreachStatus(p.property_id);
-                    if (s === "complete") memberComplete++;
-                    else if (s === "in_progress") memberInProgress++;
-                    else if (s === "contacted") memberContacted++;
-                    else memberNotStarted++;
-                  }
-                });
-                const memberTouched = memberComplete + memberInProgress + memberContacted;
-                const memberPct = assigned > 0 ? Math.round((memberTouched / assigned) * 100) : 0;
-                return (
-                  <div key={member.id} className="bg-muted/30 rounded-sm p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: member.color }} />
-                      <span className="text-sm font-semibold text-foreground truncate">{member.name}</span>
-                    </div>
-                    <div className="text-2xl font-bold font-[Space_Grotesk] text-foreground tabular-nums">{assigned}</div>
-                    <div className="text-xs text-muted-foreground">properties assigned</div>
-                    <div className="mt-2">
-                      <div className="flex h-2 rounded-sm overflow-hidden bg-muted">
-                        {memberComplete > 0 && (
-                          <div className="h-full" style={{ width: `${(memberComplete / Math.max(assigned, 1)) * 100}%`, backgroundColor: "oklch(0.45 0.15 155)" }} />
-                        )}
-                        {memberInProgress > 0 && (
-                          <div className="h-full" style={{ width: `${(memberInProgress / Math.max(assigned, 1)) * 100}%`, backgroundColor: "oklch(0.55 0.15 240)" }} />
-                        )}
-                        {memberContacted > 0 && (
-                          <div className="h-full" style={{ width: `${(memberContacted / Math.max(assigned, 1)) * 100}%`, backgroundColor: "oklch(0.60 0.17 60)" }} />
-                        )}
-                      </div>
-                      <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                        <span>{memberPct}% touched</span>
-                        <span>{memberComplete} done</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {/* Unassigned card */}
-              <div className="bg-muted/20 rounded-sm p-3 border border-dashed border-border">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-3 h-3 rounded-full flex-shrink-0 bg-gray-300" />
-                  <span className="text-sm font-semibold text-muted-foreground">Unassigned</span>
-                </div>
-                <div className="text-2xl font-bold font-[Space_Grotesk] text-muted-foreground tabular-nums">{properties.length - (totalAssigned || 0)}</div>
-                <div className="text-xs text-muted-foreground">properties remaining</div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* County and Org Progress side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,79 +1,63 @@
-/*
- * Property Notes Hook
- * Persists per-property notes to the backend database via tRPC.
- */
+import { useState, useCallback } from "react";
 
-import { useCallback } from "react";
-import { trpc } from "@/lib/trpc";
+const STORAGE_KEY = "nc-property-notes";
 
 interface NoteEntry {
   text: string;
   updatedAt: string;
 }
 
-export function usePropertyNotes() {
-  const utils = trpc.useUtils();
-  const { data: notesMap = {}, isLoading } = trpc.notes.getAll.useQuery();
+type NotesMap = Record<string, NoteEntry>;
 
-  const setNoteMutation = trpc.notes.setNote.useMutation({
-    onMutate: async ({ propertyId, text }) => {
-      await utils.notes.getAll.cancel();
-      const prev = utils.notes.getAll.getData();
-      utils.notes.getAll.setData(undefined, (old) => {
-        const next = { ...(old ?? {}) };
-        if (text.trim()) {
-          next[String(propertyId)] = {
-            text: text.trim(),
-            updatedAt: new Date(),
-          };
-        } else {
-          delete next[String(propertyId)];
-        }
-        return next;
-      });
-      return { prev };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) utils.notes.getAll.setData(undefined, context.prev);
-    },
-    onSettled: () => {
-      utils.notes.getAll.invalidate();
-    },
-  });
+function loadNotes(): NotesMap {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveNotes(notes: NotesMap) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+}
+
+export function usePropertyNotes() {
+  const [notes, setNotes] = useState<NotesMap>(loadNotes);
 
   const getNote = useCallback(
     (propertyId: number): NoteEntry | null => {
-      const entry = notesMap[String(propertyId)];
-      if (!entry) return null;
-      return {
-        text: entry.text,
-        updatedAt: entry.updatedAt instanceof Date ? entry.updatedAt.toISOString() : String(entry.updatedAt),
-      };
+      return notes[String(propertyId)] || null;
     },
-    [notesMap]
+    [notes]
   );
 
   const setNote = useCallback(
     (propertyId: number, text: string) => {
-      setNoteMutation.mutate({ propertyId, text });
+      setNotes((prev) => {
+        const updated = { ...prev };
+        if (text.trim()) {
+          updated[String(propertyId)] = {
+            text: text.trim(),
+            updatedAt: new Date().toISOString(),
+          };
+        } else {
+          delete updated[String(propertyId)];
+        }
+        saveNotes(updated);
+        return updated;
+      });
     },
-    [setNoteMutation]
+    []
   );
 
   const getNotesCount = useCallback(() => {
-    return Object.keys(notesMap).length;
-  }, [notesMap]);
+    return Object.keys(notes).length;
+  }, [notes]);
 
   const exportNotes = useCallback(() => {
-    const result: Record<string, NoteEntry> = {};
-    for (const [key, entry] of Object.entries(notesMap)) {
-      result[key] = {
-        text: entry.text,
-        updatedAt: entry.updatedAt instanceof Date ? entry.updatedAt.toISOString() : String(entry.updatedAt),
-      };
-    }
-    return result;
-  }, [notesMap]);
+    return { ...notes };
+  }, [notes]);
 
-  return { getNote, setNote, getNotesCount, exportNotes, isLoading };
+  return { getNote, setNote, getNotesCount, exportNotes };
 }

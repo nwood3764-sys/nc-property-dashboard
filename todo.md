@@ -1,9 +1,5 @@
-- [x] Upgrade to full-stack: resolve Home.tsx merge conflict (keep existing dashboard)
-- [x] Design database schema for outreach statuses, team members, and assignments
-- [x] Create database migration with pnpm db:push
-- [x] Build tRPC API routes for outreach statuses CRUD
-- [x] Build tRPC API routes for team members CRUD
-- [x] Build tRPC API routes for property assignments CRUD
-- [x] Migrate frontend from localStorage to tRPC API calls
-- [x] Write vitest tests for backend API routes
-- [x] Test full-stack integration end-to-end
+- [x] Add My Location button to map that reads device GPS
+- [x] Show user's location as a marker on the map
+- [x] Detect and highlight nearby properties within configurable radius
+- [x] Show nearby properties list/panel with distance info
+- [x] Handle GPS permission denied and error states gracefully
