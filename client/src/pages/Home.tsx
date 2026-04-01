@@ -43,8 +43,9 @@ import {
   StickyNote,
   Flame,
   Plug,
+  Navigation,
 } from "lucide-react";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663414053285/JQD4rA2CyVu8NYLQfUVcQm/hero-nc-properties-Y7pDgfAm2FyZMqQTf4db3A.webp";
 const HURRICANE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663414053285/JQD4rA2CyVu8NYLQfUVcQm/hurricane-impact-WmGfHhK8G8mV6xJCg5mTqW.webp";
@@ -128,6 +129,50 @@ export default function Home() {
     },
     [setBulkStatus]
   );
+
+  // Nearby mode state — syncs map GPS with the property table
+  const [nearbyMode, setNearbyMode] = useState(false);
+  const [nearbyIds, setNearbyIds] = useState<Map<number, number>>(new Map()); // propertyId -> distance
+  const [highlightId, setHighlightId] = useState<number | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  const handleNearbyChange = useCallback((isActive: boolean, nearby: { propertyId: number; distance: number }[]) => {
+    setNearbyMode(isActive);
+    if (isActive) {
+      const map = new Map<number, number>();
+      nearby.forEach(n => map.set(n.propertyId, n.distance));
+      setNearbyIds(map);
+    } else {
+      setNearbyIds(new Map());
+      setHighlightId(null);
+    }
+  }, []);
+
+  // When nearby mode is active, show only nearby properties in the table (sorted by distance)
+  const nearbyProperties = useMemo(() => {
+    if (!nearbyMode || nearbyIds.size === 0) return null;
+    return allFiltered
+      .filter(p => nearbyIds.has(p.property_id))
+      .sort((a, b) => (nearbyIds.get(a.property_id) ?? 999) - (nearbyIds.get(b.property_id) ?? 999));
+  }, [nearbyMode, nearbyIds, allFiltered]);
+
+  // The properties to show in the table — nearby list or normal paginated
+  const tableProperties = nearbyMode && nearbyProperties ? nearbyProperties : properties;
+
+  const handlePropertyClickFromMap = useCallback((propertyId: number) => {
+    setHighlightId(propertyId);
+    // Scroll to the table and the specific row
+    setTimeout(() => {
+      const row = document.querySelector(`tr[data-property-id="${propertyId}"]`);
+      if (row) {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (tableRef.current) {
+        tableRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+    // Clear highlight after 3 seconds
+    setTimeout(() => setHighlightId(null), 3000);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -302,7 +347,13 @@ export default function Home() {
               Filtered: {allFiltered.length.toLocaleString()} properties
             </span>
           </div>
-          {showMap && <PropertyMap properties={allFiltered} />}
+          {showMap && (
+            <PropertyMap
+              properties={allFiltered}
+              onNearbyChange={handleNearbyChange}
+              onPropertyClick={handlePropertyClickFromMap}
+            />
+          )}
         </div>
 
         {/* Disaster Context Banner */}
@@ -416,21 +467,40 @@ export default function Home() {
           totalFiltered={allFiltered.length}
         />
 
+        {/* Nearby Mode Banner */}
+        {nearbyMode && nearbyProperties && (
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-sm">
+            <Navigation className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">
+              Showing {nearbyProperties.length} nearby {nearbyProperties.length === 1 ? 'property' : 'properties'}
+            </span>
+            <span className="text-xs text-blue-600">
+              sorted by distance from your location
+            </span>
+            <span className="ml-auto text-xs text-blue-500">
+              Turn off My Location on the map to see all properties
+            </span>
+          </div>
+        )}
+
         {/* Property Table */}
-        <PropertyTable
-          properties={properties}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          getOutreachStatus={getStatus}
-          setOutreachStatus={setStatus}
-          selectedIds={selectedIds}
-          onToggleSelect={handleToggleSelect}
-          getNote={getNote}
-          setNote={setNote}
-          compareIds={compareIds}
-          onToggleCompare={handleToggleCompare}
-        />
+        <div ref={tableRef}>
+          <PropertyTable
+            properties={tableProperties}
+            sortField={nearbyMode ? sortField : sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            getOutreachStatus={getStatus}
+            setOutreachStatus={setStatus}
+            selectedIds={selectedIds}
+            onToggleSelect={handleToggleSelect}
+            getNote={getNote}
+            setNote={setNote}
+            compareIds={compareIds}
+            onToggleCompare={handleToggleCompare}
+            highlightId={highlightId}
+          />
+        </div>
 
         {/* Comparison Modal */}
         {showCompare && compareProperties.length >= 2 && (
@@ -450,14 +520,16 @@ export default function Home() {
           />
         )}
 
-        {/* Pagination */}
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          totalItems={allFiltered.length}
-          pageSize={pageSize}
-        />
+        {/* Pagination — hidden in nearby mode since all nearby properties are shown */}
+        {!nearbyMode && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={allFiltered.length}
+            pageSize={pageSize}
+          />
+        )}
 
         {/* Footer */}
         <footer className="border-t border-border pt-4 pb-8">

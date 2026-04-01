@@ -3,3 +3,6 @@
 - [x] Detect and highlight nearby properties within configurable radius
 - [x] Show nearby properties list/panel with distance info
 - [x] Handle GPS permission denied and error states gracefully
+- [x] Filter main property table to show only nearby properties when My Location is active
+- [x] Clicking property name in nearby panel scrolls to that row in the main table
+- [x] Ensure list view and map view show the same set of properties

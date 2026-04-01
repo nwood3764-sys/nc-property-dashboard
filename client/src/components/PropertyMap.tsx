@@ -12,8 +12,15 @@ import type { Property } from "@/lib/types";
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { MapPin, Layers, X, Navigation, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
+interface NearbyPropertyInfo {
+  propertyId: number;
+  distance: number;
+}
+
 interface PropertyMapProps {
   properties: Property[];
+  onNearbyChange?: (isActive: boolean, nearbyIds: NearbyPropertyInfo[]) => void;
+  onPropertyClick?: (propertyId: number) => void;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -203,7 +210,7 @@ interface NearbyProperty extends Property {
 
 type LocationState = "idle" | "loading" | "active" | "error";
 
-export default function PropertyMap({ properties }: PropertyMapProps) {
+export default function PropertyMap({ properties, onNearbyChange, onPropertyClick }: PropertyMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
@@ -229,6 +236,7 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
   useEffect(() => {
     if (!userLocation) {
       setNearbyProperties([]);
+      onNearbyChange?.(false, []);
       return;
     }
     const nearby: NearbyProperty[] = [];
@@ -241,6 +249,7 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
     }
     nearby.sort((a, b) => a.distance - b.distance);
     setNearbyProperties(nearby);
+    onNearbyChange?.(true, nearby.map(p => ({ propertyId: p.property_id, distance: p.distance })));
   }, [userLocation, radiusMiles, geoProperties.length]);
 
   // Draw/update radius circle on map
@@ -493,13 +502,14 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
     setNearbyProperties([]);
     setLocationState("idle");
     setLocationError(null);
+    onNearbyChange?.(false, []);
 
     // Reset map view
     if (mapRef.current) {
       mapRef.current.panTo(NC_CENTER);
       mapRef.current.setZoom(NC_ZOOM);
     }
-  }, []);
+  }, [onNearbyChange]);
 
   const recenterOnUser = useCallback(() => {
     if (userLocation && mapRef.current) {
@@ -716,6 +726,7 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
                             tiers: { [p.priority_tier]: 1 },
                           });
                         }
+                        onPropertyClick?.(p.property_id);
                       }}
                     >
                       <div className="flex items-start justify-between gap-2">

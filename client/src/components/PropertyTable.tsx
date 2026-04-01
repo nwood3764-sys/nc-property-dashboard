@@ -22,6 +22,7 @@ interface PropertyTableProps {
   setNote?: (id: number, text: string) => void;
   compareIds?: Set<number>;
   onToggleCompare?: (id: number) => void;
+  highlightId?: number | null;
 }
 
 function SortIcon({ field, currentField, direction }: { field: SortField; currentField: SortField; direction: SortDirection }) {
@@ -317,7 +318,7 @@ function ExpandedRow({ property, getNote, setNote }: { property: Property; getNo
   );
 }
 
-export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect, getNote, setNote, compareIds, onToggleCompare }: PropertyTableProps) {
+export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect, getNote, setNote, compareIds, onToggleCompare, highlightId }: PropertyTableProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [, setLocation] = useLocation();
 
@@ -408,7 +409,8 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
               <>
                 <tr
                   key={p.property_id}
-                  className={`border-b border-border hover:bg-muted/40 transition-colors cursor-pointer ${tierRowClass[p.priority_tier]} ${hasSelection && selectedIds.has(p.property_id) ? "bg-[oklch(0.95_0.02_240)]" : ""}`}
+                  data-property-id={p.property_id}
+                  className={`border-b border-border hover:bg-muted/40 transition-colors cursor-pointer ${tierRowClass[p.priority_tier]} ${hasSelection && selectedIds.has(p.property_id) ? "bg-[oklch(0.95_0.02_240)]" : ""} ${highlightId === p.property_id ? "ring-2 ring-blue-400 ring-inset bg-blue-50/60" : ""}`}
                   onClick={() => setExpandedId(expandedId === p.property_id ? null : p.property_id)}
                 >
                   {hasSelection && (
