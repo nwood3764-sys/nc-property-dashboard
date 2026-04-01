@@ -1,4 +1,4 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase, ExternalLink } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Droplets, Shield, Home as HomeIcon, Users, Building, Layers, LayoutGrid, MapPin, BadgeDollarSign, Briefcase, ExternalLink, Zap, Clock, Globe, Search as SearchIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import TierBadge from "./TierBadge";
 import ScoreBar from "./ScoreBar";
@@ -42,8 +42,8 @@ function ExpandedRow({ property }: { property: Property }) {
   const p = property;
   return (
     <tr>
-      <td colSpan={14} className="bg-muted/30 px-6 py-4 border-b border-border">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
+      <td colSpan={15} className="bg-muted/30 px-6 py-4 border-b border-border">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 text-sm">
           {/* Property Details */}
           <div>
             <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Property Details</h4>
@@ -137,6 +137,83 @@ function ExpandedRow({ property }: { property: Property }) {
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${p.is_lihtc ? "bg-[oklch(0.50_0.15_140)]" : "bg-gray-300"}`} />
                 <span className={p.is_lihtc ? "font-medium" : "text-muted-foreground"}>LIHTC</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Contract, Energy & Links */}
+          <div>
+            {/* Contract Expiration */}
+            {p.contractExpiration && (
+              <div className="mb-3">
+                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Contract Info</h4>
+                <div className="space-y-1">
+                  <p><span className="text-muted-foreground">Contract #:</span> <span className="font-medium">{p.contractNumber}</span></p>
+                  <p><span className="text-muted-foreground">Expires:</span> <span className={`font-medium ${p.yearsUntilExpiration != null && p.yearsUntilExpiration <= 5 ? 'text-[oklch(0.50_0.20_25)]' : ''}`}>{p.contractExpiration}</span></p>
+                  {p.yearsUntilExpiration != null && (
+                    <p className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      <span className={`font-semibold text-xs ${p.yearsUntilExpiration <= 2 ? 'text-[oklch(0.50_0.20_25)]' : p.yearsUntilExpiration <= 5 ? 'text-[oklch(0.60_0.17_60)]' : 'text-muted-foreground'}`}>
+                        {p.yearsUntilExpiration > 0 ? `${p.yearsUntilExpiration} years remaining` : 'Expired'}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Energy Burden */}
+            {p.energyBurdenPct != null && (
+              <div className="mb-3">
+                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Energy Burden</h4>
+                <div className="space-y-1">
+                  <p className="flex items-center gap-1">
+                    <Zap className={`w-3.5 h-3.5 ${p.energyBurdenPct >= 4 ? 'text-[oklch(0.50_0.20_25)]' : 'text-[oklch(0.60_0.17_60)]'}`} />
+                    <span className={`font-semibold ${p.energyBurdenPct >= 4 ? 'text-[oklch(0.50_0.20_25)]' : ''}`}>{p.energyBurdenPct}%</span>
+                    <span className="text-xs text-muted-foreground">of income (county avg)</span>
+                  </p>
+                  {p.avgMonthlyEnergy != null && (
+                    <p><span className="text-muted-foreground">Avg Monthly Energy:</span> <span className="font-medium">${p.avgMonthlyEnergy}</span></p>
+                  )}
+                  {p.energyBurdenPct >= 4 && (
+                    <p className="text-xs text-[oklch(0.50_0.20_25)] font-medium mt-1">High energy burden county</p>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Profile Links */}
+            <div>
+              <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Research Links</h4>
+              <div className="flex flex-wrap gap-1.5">
+                {p.nhpdLink && (
+                  <a href={p.nhpdLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-sm bg-[oklch(0.94_0.01_250)] text-[oklch(0.35_0.06_250)] hover:bg-[oklch(0.90_0.02_250)] transition-colors">
+                    <Globe className="w-3 h-3" /> NHPD
+                  </a>
+                )}
+                {p.affordableHousingLink && (
+                  <a href={p.affordableHousingLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-sm bg-[oklch(0.94_0.01_250)] text-[oklch(0.35_0.06_250)] hover:bg-[oklch(0.90_0.02_250)] transition-colors">
+                    <HomeIcon className="w-3 h-3" /> AffordableHousing
+                  </a>
+                )}
+                {p.hudProfileLink && (
+                  <a href={p.hudProfileLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-sm bg-[oklch(0.94_0.01_250)] text-[oklch(0.35_0.06_250)] hover:bg-[oklch(0.90_0.02_250)] transition-colors">
+                    <Building className="w-3 h-3" /> HUD REAC
+                  </a>
+                )}
+                {p.nchfaLink && (
+                  <a href={p.nchfaLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-sm bg-[oklch(0.94_0.01_250)] text-[oklch(0.35_0.06_250)] hover:bg-[oklch(0.90_0.02_250)] transition-colors">
+                    <Shield className="w-3 h-3" /> NCHFA
+                  </a>
+                )}
+                {p.googleSearchLink && (
+                  <a href={p.googleSearchLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-sm bg-[oklch(0.90_0.08_60)] text-[oklch(0.35_0.12_60)] hover:bg-[oklch(0.85_0.10_60)] transition-colors">
+                    <SearchIcon className="w-3 h-3" /> Find Website
+                  </a>
+                )}
               </div>
             </div>
           </div>

@@ -45,6 +45,17 @@ export interface Property {
   mgmt_phone?: string;
   organization?: string;
   organization_normalized?: string;
+  // New enrichment fields
+  contractExpiration?: string | null;
+  contractNumber?: string | null;
+  yearsUntilExpiration?: number | null;
+  energyBurdenPct?: number | null;
+  avgMonthlyEnergy?: number | null;
+  nhpdLink?: string | null;
+  affordableHousingLink?: string | null;
+  hudProfileLink?: string | null;
+  nchfaLink?: string | null;
+  googleSearchLink?: string | null;
 }
 
 export type SortField =
@@ -58,7 +69,9 @@ export type SortField =
   | "total_unit_count"
   | "est_stories"
   | "est_buildings"
-  | "organization";
+  | "organization"
+  | "energyBurdenPct"
+  | "yearsUntilExpiration";
 
 export type SortDirection = "asc" | "desc";
 
@@ -78,4 +91,6 @@ export interface Filters {
   organizations: Set<string>;
   ageRange: [number, number];
   outreachStatus: string;
+  expiringWithinYears: number | null;
+  highEnergyBurden: boolean;
 }

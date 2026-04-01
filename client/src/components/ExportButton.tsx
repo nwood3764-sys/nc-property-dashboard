@@ -26,6 +26,9 @@ export default function ExportButton({ properties, getOutreachStatus }: ExportBu
       "Age Score", "Disaster Score", "Flood Score", "Weatherization Score",
       "LIHTC", "Data Source",
       "Organization", "Owner/Developer", "Mgmt Agent", "Mgmt Phone", "Mgmt Email",
+      "Contract #", "Contract Expiration", "Years Until Expiration",
+      "Energy Burden %", "Avg Monthly Energy $",
+      "NHPD Link", "AffordableHousing Link", "HUD Profile Link", "NCHFA Link", "Google Search Link",
       "Outreach Status"
     ];
 
@@ -66,6 +69,16 @@ export default function ExportButton({ properties, getOutreachStatus }: ExportBu
       `"${(p.mgmt_agent ?? "").replace(/"/g, '""')}"`,
       `"${p.mgmt_phone ?? ""}"`,
       `"${p.mgmt_email ?? ""}"`,
+      `"${p.contractNumber ?? ""}"`,
+      `"${p.contractExpiration ?? ""}"`,
+      p.yearsUntilExpiration ?? "",
+      p.energyBurdenPct ?? "",
+      p.avgMonthlyEnergy ?? "",
+      `"${p.nhpdLink ?? ""}"`,
+      `"${p.affordableHousingLink ?? ""}"`,
+      `"${p.hudProfileLink ?? ""}"`,
+      `"${p.nchfaLink ?? ""}"`,
+      `"${p.googleSearchLink ?? ""}"`,
       getOutreachStatus ? statusLabels[getOutreachStatus(p.property_id)] : "Not Started",
     ]);
 

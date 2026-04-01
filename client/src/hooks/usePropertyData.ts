@@ -20,6 +20,8 @@ const defaultFilters: Filters = {
   organizations: new Set<string>(),
   ageRange: [0, 80],
   outreachStatus: "all",
+  expiringWithinYears: null,
+  highEnergyBurden: false,
 };
 
 export function usePropertyData() {
@@ -130,6 +132,19 @@ export function usePropertyData() {
       });
     }
 
+    // Contract expiration filter
+    if (filters.expiringWithinYears != null) {
+      result = result.filter((p) => {
+        if (p.yearsUntilExpiration == null) return false;
+        return p.yearsUntilExpiration <= filters.expiringWithinYears!;
+      });
+    }
+
+    // High energy burden filter
+    if (filters.highEnergyBurden) {
+      result = result.filter((p) => (p.energyBurdenPct ?? 0) >= 4.0);
+    }
+
     return result;
   }, [filters]);
 
@@ -181,6 +196,23 @@ export function usePropertyData() {
       hudLihtcOverlap: fp.filter((p) => p.is_lihtc && p.category_clean !== "LIHTC").length,
       withOrg: fp.filter((p) => (p.organization || '').trim()).length,
       uniqueOrgs: new Set(fp.filter((p) => (p.organization || '').trim()).map((p) => p.organization!)).size,
+      withContract: fp.filter((p) => p.contractExpiration).length,
+      expiringIn5Yr: fp.filter((p) => p.yearsUntilExpiration != null && p.yearsUntilExpiration <= 5).length,
+      withEnergyBurden: fp.filter((p) => p.energyBurdenPct != null).length,
+      highEnergyBurden: fp.filter((p) => (p.energyBurdenPct ?? 0) >= 4.0).length,
+      avgEnergyBurden: fp.filter((p) => p.energyBurdenPct != null).length > 0
+        ? Math.round(fp.filter((p) => p.energyBurdenPct != null).reduce((s, p) => s + (p.energyBurdenPct ?? 0), 0) / fp.filter((p) => p.energyBurdenPct != null).length * 10) / 10
+        : 0,
+      avgAge: (() => {
+        const withAge = fp.filter((p) => p.property_age_years != null);
+        return withAge.length > 0 ? Math.round(withAge.reduce((s, p) => s + p.property_age_years!, 0) / withAge.length) : 0;
+      })(),
+      medianAge: (() => {
+        const ages = fp.filter((p) => p.property_age_years != null).map((p) => p.property_age_years!).sort((a, b) => a - b);
+        if (ages.length === 0) return 0;
+        const mid = Math.floor(ages.length / 2);
+        return ages.length % 2 !== 0 ? ages[mid] : Math.round((ages[mid - 1] + ages[mid]) / 2);
+      })(),
     };
   }, [filteredProperties]);
 

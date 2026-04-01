@@ -87,7 +87,9 @@ export default function FilterPanel({
     filters.organizations.size > 0 ||
     filters.ageRange[0] > 0 ||
     filters.ageRange[1] < 80 ||
-    filters.outreachStatus !== "all";
+    filters.outreachStatus !== "all" ||
+    filters.expiringWithinYears != null ||
+    filters.highEnergyBurden;
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm">
@@ -334,6 +336,36 @@ export default function FilterPanel({
                   <SelectItem value="complete">Complete</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Contract & Energy */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+              Contract Expiration
+            </label>
+            <Select
+              value={filters.expiringWithinYears != null ? String(filters.expiringWithinYears) : "all"}
+              onValueChange={(val) => updateFilter("expiringWithinYears", val === "all" ? null : Number(val))}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Any" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any Expiration</SelectItem>
+                <SelectItem value="2">Expiring in 2 years</SelectItem>
+                <SelectItem value="5">Expiring in 5 years</SelectItem>
+                <SelectItem value="10">Expiring in 10 years</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="mt-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={filters.highEnergyBurden}
+                  onCheckedChange={(v) => updateFilter("highEnergyBurden", !!v)}
+                />
+                High Energy Burden (4%+)
+              </label>
             </div>
           </div>
 

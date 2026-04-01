@@ -35,6 +35,8 @@ import {
   Users,
   ClipboardCheck,
   Activity,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 
@@ -203,6 +205,38 @@ export default function Home() {
           />
         </div>
 
+        {/* Second row: Contract & Energy metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricCard
+            label="With Contract Data"
+            value={stats.withContract}
+            icon={<Clock className="w-5 h-5 text-white" />}
+            accent="oklch(0.50 0.15 280)"
+            sub={`${stats.expiringIn5Yr} expiring within 5yr`}
+          />
+          <MetricCard
+            label="High Energy Burden"
+            value={stats.highEnergyBurden}
+            icon={<Zap className="w-5 h-5 text-white" />}
+            accent="oklch(0.55 0.18 40)"
+            sub={`Avg ${stats.avgEnergyBurden}% of income`}
+          />
+          <MetricCard
+            label="With Energy Data"
+            value={stats.withEnergyBurden}
+            icon={<Zap className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
+            accent="oklch(0.94 0.01 250)"
+            sub={`${Math.round((stats.withEnergyBurden / stats.total) * 100)}% coverage`}
+          />
+          <MetricCard
+            label="Avg Property Age"
+            value={`${stats.avgAge}yr`}
+            icon={<Calendar className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
+            accent="oklch(0.94 0.01 250)"
+            sub={`Median ${stats.medianAge}yr`}
+          />
+        </div>
+
         {/* Outreach Progress Dashboard Toggle */}
         <div>
           <div className="flex items-center gap-3 mb-3">
@@ -355,7 +389,7 @@ export default function Home() {
         <footer className="border-t border-border pt-4 pb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs text-muted-foreground">
             <p>
-              Data sources: HUD Active Portfolio Property Data & HUD LIHTC Database. Disaster data: FEMA disaster declarations (DR-4827, DR-4393, DR-4285, DR-4465).
+              Data sources: HUD Active Portfolio Property Data, HUD LIHTC Database, HUD Multifamily Contracts, DOE LEAD Energy Burden Data. Disaster data: FEMA disaster declarations (DR-4827, DR-4393, DR-4285, DR-4465).
             </p>
             <p>
               Last updated: March 2026
