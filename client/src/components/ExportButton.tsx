@@ -2,6 +2,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Property } from "@/lib/types";
 import type { OutreachStatus } from "@/hooks/useOutreachStatus";
+import type { TeamMember } from "@/hooks/useTeamAssignments";
 
 const statusLabels: Record<OutreachStatus, string> = {
   none: "Not Started",
@@ -13,9 +14,10 @@ const statusLabels: Record<OutreachStatus, string> = {
 interface ExportButtonProps {
   properties: Property[];
   getOutreachStatus?: (id: number) => OutreachStatus;
+  getAssignedMember?: (id: number) => TeamMember | null;
 }
 
-export default function ExportButton({ properties, getOutreachStatus }: ExportButtonProps) {
+export default function ExportButton({ properties, getOutreachStatus, getAssignedMember }: ExportButtonProps) {
   const handleExport = () => {
     const headers = [
       "Priority Score", "Tier", "Property Name", "Address", "City", "County", "ZIP",
@@ -31,7 +33,8 @@ export default function ExportButton({ properties, getOutreachStatus }: ExportBu
       "Electric Utility", "Electric Rate ($/kWh)", "Gas Utility", "Has Gas Service",
       "Heating System (Est.)",
       "NHPD Link", "AffordableHousing Link", "HUD Profile Link", "NCHFA Link", "Google Search Link",
-      "Outreach Status"
+      "Outreach Status",
+      "Assigned To"
     ];
 
     const rows = properties.map((p) => [
@@ -87,6 +90,7 @@ export default function ExportButton({ properties, getOutreachStatus }: ExportBu
       `"${p.nchfaLink ?? ""}"`,
       `"${p.googleSearchLink ?? ""}"`,
       getOutreachStatus ? statusLabels[getOutreachStatus(p.property_id)] : "Not Started",
+      `"${getAssignedMember ? (getAssignedMember(p.property_id)?.name ?? "") : ""}"`,
     ]);
 
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");

@@ -106,4 +106,5 @@ export interface Filters {
   electricUtilities: Set<string>;
   heatingTypes: Set<string>;
   hasGasService: string; // "all" | "yes" | "no"
+  assignedTo: string; // "all" | "unassigned" | team member id
 }

@@ -25,6 +25,7 @@ const defaultFilters: Filters = {
   electricUtilities: new Set<string>(),
   heatingTypes: new Set<string>(),
   hasGasService: "all",
+  assignedTo: "all",
 };
 
 export function usePropertyData() {
@@ -169,6 +170,8 @@ export function usePropertyData() {
     // Gas service filter
     if (filters.hasGasService === "yes") result = result.filter((p) => p.hasGasService);
     else if (filters.hasGasService === "no") result = result.filter((p) => !p.hasGasService);
+
+    // NOTE: assignedTo filter is applied externally in Home.tsx since it depends on team assignment state
 
     return result;
   }, [filters]);

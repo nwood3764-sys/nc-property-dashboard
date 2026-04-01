@@ -4,8 +4,9 @@
  * Design: Civic Blueprint — dark navy bar with action buttons.
  */
 
-import { CheckSquare, Square, X, ChevronDown } from "lucide-react";
+import { CheckSquare, Square, X, ChevronDown, UserCheck } from "lucide-react";
 import type { OutreachStatus } from "@/hooks/useOutreachStatus";
+import type { TeamMember } from "@/hooks/useTeamAssignments";
 import { useState, useRef, useEffect } from "react";
 
 interface BulkActionBarProps {
@@ -16,6 +17,8 @@ interface BulkActionBarProps {
   onDeselectAll: () => void;
   onBulkUpdate: (ids: number[], status: OutreachStatus) => void;
   totalFiltered: number;
+  team?: TeamMember[];
+  onBulkAssign?: (ids: number[], memberId: string | null) => void;
 }
 
 const statusOptions: { value: OutreachStatus; label: string; color: string }[] = [
@@ -32,14 +35,21 @@ export default function BulkActionBar({
   onDeselectAll,
   onBulkUpdate,
   totalFiltered,
+  team,
+  onBulkAssign,
 }: BulkActionBarProps) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const assignDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
+      }
+      if (assignDropdownRef.current && !assignDropdownRef.current.contains(e.target as Node)) {
+        setShowAssignDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -83,8 +93,9 @@ export default function BulkActionBar({
           )}
         </div>
 
-        {/* Right: Bulk action dropdown */}
+        {/* Right: Bulk action dropdowns */}
         {count > 0 && (
+          <div className="flex items-center gap-2">
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
@@ -115,6 +126,54 @@ export default function BulkActionBar({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Bulk Assign dropdown */}
+          {team && team.length > 0 && onBulkAssign && (
+            <div className="relative" ref={assignDropdownRef}>
+              <button
+                onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+                className="flex items-center gap-2 px-4 py-2 bg-[oklch(0.35_0.06_250)] text-white text-sm font-semibold rounded-sm hover:bg-[oklch(0.30_0.06_250)] transition-colors"
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                Assign {count.toLocaleString()} to...
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+
+              {showAssignDropdown && (
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-border rounded-sm shadow-lg z-50">
+                  <button
+                    onClick={() => {
+                      onBulkAssign(Array.from(selectedIds), null);
+                      setShowAssignDropdown(false);
+                      onDeselectAll();
+                    }}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 text-muted-foreground"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-gray-300" />
+                    Unassign
+                  </button>
+                  {team.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        onBulkAssign(Array.from(selectedIds), m.id);
+                        setShowAssignDropdown(false);
+                        onDeselectAll();
+                      }}
+                      className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: m.color }}
+                      />
+                      {m.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           </div>
         )}
       </div>
