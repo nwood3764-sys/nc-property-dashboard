@@ -8,3 +8,9 @@
 - [x] Ensure list view and map view show the same set of properties
 - [x] Fix Google Maps link: address not populated when opening Google Maps from property (verified working - address populates correctly)
 - [x] Fix map flashing/re-rendering when clicking My Location or interacting with location features
+- [x] Map Bounds Filtering: table shows only properties visible in current map viewport
+- [x] Toggle button to enable/disable map-table sync
+- [x] Cluster Click to Filter: clicking a cluster marker filters table to those properties
+- [x] Clear cluster filter button to reset table
+- [x] Hide pagination when map filter is active
+- [x] Show banner indicating which map filter mode is active

@@ -21,6 +21,8 @@ interface PropertyMapProps {
   properties: Property[];
   onNearbyChange?: (isActive: boolean, nearbyIds: NearbyPropertyInfo[]) => void;
   onPropertyClick?: (propertyId: number) => void;
+  onBoundsChange?: (visiblePropertyIds: number[]) => void;
+  onClusterSelect?: (propertyIds: number[]) => void;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -210,7 +212,7 @@ interface NearbyProperty extends Property {
 
 type LocationState = "idle" | "loading" | "active" | "error";
 
-export default function PropertyMap({ properties, onNearbyChange, onPropertyClick }: PropertyMapProps) {
+export default function PropertyMap({ properties, onNearbyChange, onPropertyClick, onBoundsChange, onClusterSelect }: PropertyMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
@@ -223,6 +225,10 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
   onNearbyChangeRef.current = onNearbyChange;
   const onPropertyClickRef = useRef(onPropertyClick);
   onPropertyClickRef.current = onPropertyClick;
+  const onBoundsChangeRef = useRef(onBoundsChange);
+  onBoundsChangeRef.current = onBoundsChange;
+  const onClusterSelectRef = useRef(onClusterSelect);
+  onClusterSelectRef.current = onClusterSelect;
 
   const [selectedCluster, setSelectedCluster] = useState<ClusterGroup | null>(null);
   const [currentZoom, setCurrentZoom] = useState(NC_ZOOM);
@@ -247,6 +253,21 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
   geoPropsLengthRef.current = geoProperties.length;
   const geoPropsRef = useRef(geoProperties);
   geoPropsRef.current = geoProperties;
+
+  // Report visible properties within map bounds to parent
+  const reportVisibleProperties = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const bounds = map.getBounds();
+    if (!bounds) return;
+    const visibleIds: number[] = [];
+    for (const p of geoPropsRef.current) {
+      if (p.lat != null && p.lng != null && bounds.contains({ lat: p.lat, lng: p.lng })) {
+        visibleIds.push(p.property_id);
+      }
+    }
+    onBoundsChangeRef.current?.(visibleIds);
+  }, []);
 
   useEffect(() => {
     if (!userLocation) {
@@ -393,11 +414,13 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
         marker.addListener("click", () => {
           if (isSingle) {
             setSelectedCluster(cluster);
+            onClusterSelectRef.current?.(cluster.properties.map(p => p.property_id));
           } else if (zoom < 14) {
             mapRef.current?.setZoom(zoom + 2);
             mapRef.current?.panTo({ lat: cluster.lat, lng: cluster.lng });
           } else {
             setSelectedCluster(cluster);
+            onClusterSelectRef.current?.(cluster.properties.map(p => p.property_id));
           }
         });
 
@@ -423,8 +446,13 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
         const z = map.getZoom();
         if (z != null) setCurrentZoom(z);
       });
+
+      // Report visible properties when map stops moving (idle = after pan/zoom)
+      map.addListener("idle", () => {
+        reportVisibleProperties();
+      });
     },
-    []
+    [reportVisibleProperties]
   );
 
   // GPS functions
@@ -812,7 +840,7 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
                   : `${selectedCluster.properties.length} Properties`}
               </span>
               <button
-                onClick={() => setSelectedCluster(null)}
+                onClick={() => { setSelectedCluster(null); onClusterSelectRef.current?.([]); }}
                 className="text-white/70 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />

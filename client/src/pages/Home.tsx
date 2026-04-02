@@ -44,6 +44,7 @@ import {
   Flame,
   Plug,
   Navigation,
+  Layers,
 } from "lucide-react";
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 
@@ -136,6 +137,11 @@ export default function Home() {
   const [highlightId, setHighlightId] = useState<number | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
+  // Map sync state — filters table to match map viewport or cluster selection
+  const [mapSyncEnabled, setMapSyncEnabled] = useState(false);
+  const [visiblePropertyIds, setVisiblePropertyIds] = useState<Set<number> | null>(null);
+  const [clusterPropertyIds, setClusterPropertyIds] = useState<Set<number> | null>(null);
+
   const handleNearbyChange = useCallback((isActive: boolean, nearby: { propertyId: number; distance: number }[]) => {
     setNearbyMode(isActive);
     if (isActive) {
@@ -156,8 +162,43 @@ export default function Home() {
       .sort((a, b) => (nearbyIds.get(a.property_id) ?? 999) - (nearbyIds.get(b.property_id) ?? 999));
   }, [nearbyMode, nearbyIds, allFiltered]);
 
-  // The properties to show in the table — nearby list or normal paginated
-  const tableProperties = nearbyMode && nearbyProperties ? nearbyProperties : properties;
+  // Map bounds change handler — called when map pans/zooms
+  const handleBoundsChange = useCallback((ids: number[]) => {
+    setVisiblePropertyIds(new Set(ids));
+  }, []);
+
+  // Cluster click handler — called when a cluster marker is clicked
+  const handleClusterSelect = useCallback((ids: number[]) => {
+    if (ids.length === 0) {
+      setClusterPropertyIds(null);
+    } else {
+      setClusterPropertyIds(new Set(ids));
+    }
+  }, []);
+
+  // Properties filtered by map viewport when sync is enabled
+  const boundsFilteredProperties = useMemo(() => {
+    if (!mapSyncEnabled || !visiblePropertyIds) return null;
+    return allFiltered.filter(p => visiblePropertyIds.has(p.property_id));
+  }, [mapSyncEnabled, visiblePropertyIds, allFiltered]);
+
+  // Properties filtered by cluster selection
+  const clusterFilteredProperties = useMemo(() => {
+    if (!clusterPropertyIds) return null;
+    return allFiltered.filter(p => clusterPropertyIds.has(p.property_id));
+  }, [clusterPropertyIds, allFiltered]);
+
+  // The properties to show in the table — priority: nearby > cluster > bounds sync > normal paginated
+  const tableProperties = nearbyMode && nearbyProperties
+    ? nearbyProperties
+    : clusterFilteredProperties
+      ? clusterFilteredProperties
+      : mapSyncEnabled && boundsFilteredProperties
+        ? boundsFilteredProperties
+        : properties;
+
+  // Whether any map-based filter is active (for hiding pagination)
+  const isMapFiltered = nearbyMode || !!clusterFilteredProperties || (mapSyncEnabled && !!boundsFilteredProperties);
 
   const handlePropertyClickFromMap = useCallback((propertyId: number) => {
     setHighlightId(propertyId);
@@ -348,11 +389,48 @@ export default function Home() {
             </span>
           </div>
           {showMap && (
-            <PropertyMap
-              properties={allFiltered}
-              onNearbyChange={handleNearbyChange}
-              onPropertyClick={handlePropertyClickFromMap}
-            />
+            <>
+              {/* Map Sync Toggle */}
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                  onClick={() => {
+                    setMapSyncEnabled(!mapSyncEnabled);
+                    if (mapSyncEnabled) {
+                      setClusterPropertyIds(null);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-sm border transition-colors ${
+                    mapSyncEnabled
+                      ? 'bg-[oklch(0.30_0.06_250)] text-white border-[oklch(0.30_0.06_250)]'
+                      : 'bg-white text-[oklch(0.30_0.06_250)] border-border hover:bg-muted/50'
+                  }`}
+                  title={mapSyncEnabled ? 'Click to stop syncing table with map' : 'Click to sync table with map viewport'}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  {mapSyncEnabled ? 'Map Sync On' : 'Sync Table with Map'}
+                </button>
+                {mapSyncEnabled && (
+                  <span className="text-xs text-muted-foreground">
+                    Pan or zoom the map to filter the table below
+                  </span>
+                )}
+                {clusterPropertyIds && (
+                  <button
+                    onClick={() => setClusterPropertyIds(null)}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-sm bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+                  >
+                    Clear Cluster Filter
+                  </button>
+                )}
+              </div>
+              <PropertyMap
+                properties={allFiltered}
+                onNearbyChange={handleNearbyChange}
+                onPropertyClick={handlePropertyClickFromMap}
+                onBoundsChange={handleBoundsChange}
+                onClusterSelect={handleClusterSelect}
+              />
+            </>
           )}
         </div>
 
@@ -467,7 +545,7 @@ export default function Home() {
           totalFiltered={allFiltered.length}
         />
 
-        {/* Nearby Mode Banner */}
+        {/* Map Filter Banners */}
         {nearbyMode && nearbyProperties && (
           <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-sm">
             <Navigation className="w-4 h-4 text-blue-600" />
@@ -479,6 +557,31 @@ export default function Home() {
             </span>
             <span className="ml-auto text-xs text-blue-500">
               Turn off My Location on the map to see all properties
+            </span>
+          </div>
+        )}
+        {!nearbyMode && clusterFilteredProperties && (
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-sm">
+            <Layers className="w-4 h-4 text-amber-600" />
+            <span className="text-sm font-medium text-amber-800">
+              Showing {clusterFilteredProperties.length} {clusterFilteredProperties.length === 1 ? 'property' : 'properties'} from selected cluster
+            </span>
+            <button
+              onClick={() => setClusterPropertyIds(null)}
+              className="ml-auto text-xs font-medium text-amber-700 hover:text-amber-900 underline"
+            >
+              Clear cluster filter
+            </button>
+          </div>
+        )}
+        {!nearbyMode && !clusterFilteredProperties && mapSyncEnabled && boundsFilteredProperties && (
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-[oklch(0.96_0.01_250)] border border-[oklch(0.85_0.03_250)] rounded-sm">
+            <Layers className="w-4 h-4 text-[oklch(0.40_0.06_250)]" />
+            <span className="text-sm font-medium text-[oklch(0.25_0.06_250)]">
+              Showing {boundsFilteredProperties.length} {boundsFilteredProperties.length === 1 ? 'property' : 'properties'} in map view
+            </span>
+            <span className="text-xs text-[oklch(0.45_0.04_250)]">
+              Pan or zoom the map to update
             </span>
           </div>
         )}
@@ -520,8 +623,8 @@ export default function Home() {
           />
         )}
 
-        {/* Pagination — hidden in nearby mode since all nearby properties are shown */}
-        {!nearbyMode && (
+        {/* Pagination — hidden when any map-based filter is active */}
+        {!isMapFiltered && (
           <Pagination
             page={page}
             totalPages={totalPages}
