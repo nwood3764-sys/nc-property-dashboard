@@ -6,3 +6,5 @@
 - [x] Filter main property table to show only nearby properties when My Location is active
 - [x] Clicking property name in nearby panel scrolls to that row in the main table
 - [x] Ensure list view and map view show the same set of properties
+- [x] Fix Google Maps link: address not populated when opening Google Maps from property (verified working - address populates correctly)
+- [x] Fix map flashing/re-rendering when clicking My Location or interacting with location features

@@ -218,6 +218,12 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
   const nearbyMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const watchIdRef = useRef<number | null>(null);
 
+  // Store callbacks in refs to avoid re-triggering effects when parent re-renders
+  const onNearbyChangeRef = useRef(onNearbyChange);
+  onNearbyChangeRef.current = onNearbyChange;
+  const onPropertyClickRef = useRef(onPropertyClick);
+  onPropertyClickRef.current = onPropertyClick;
+
   const [selectedCluster, setSelectedCluster] = useState<ClusterGroup | null>(null);
   const [currentZoom, setCurrentZoom] = useState(NC_ZOOM);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -230,17 +236,26 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
   const [nearbyProperties, setNearbyProperties] = useState<NearbyProperty[]>([]);
   const [showNearbyPanel, setShowNearbyPanel] = useState(true);
 
-  const geoProperties = properties.filter((p) => p.lat != null && p.lng != null);
+  const geoProperties = useMemo(
+    () => properties.filter((p) => p.lat != null && p.lng != null),
+    [properties]
+  );
 
   // Compute nearby properties when location or radius changes
+  // Use geoProperties.length as dep (not the array itself) to avoid re-running when parent re-renders with same data
+  const geoPropsLengthRef = useRef(geoProperties.length);
+  geoPropsLengthRef.current = geoProperties.length;
+  const geoPropsRef = useRef(geoProperties);
+  geoPropsRef.current = geoProperties;
+
   useEffect(() => {
     if (!userLocation) {
       setNearbyProperties([]);
-      onNearbyChange?.(false, []);
+      onNearbyChangeRef.current?.(false, []);
       return;
     }
     const nearby: NearbyProperty[] = [];
-    for (const p of geoProperties) {
+    for (const p of geoPropsRef.current) {
       if (p.lat == null || p.lng == null) continue;
       const dist = haversineDistance(userLocation.lat, userLocation.lng, p.lat, p.lng);
       if (dist <= radiusMiles) {
@@ -249,8 +264,8 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
     }
     nearby.sort((a, b) => a.distance - b.distance);
     setNearbyProperties(nearby);
-    onNearbyChange?.(true, nearby.map(p => ({ propertyId: p.property_id, distance: p.distance })));
-  }, [userLocation, radiusMiles, geoProperties.length]);
+    onNearbyChangeRef.current?.(true, nearby.map(p => ({ propertyId: p.property_id, distance: p.distance })));
+  }, [userLocation, radiusMiles]);
 
   // Draw/update radius circle on map
   useEffect(() => {
@@ -347,12 +362,15 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
     markersRef.current = [];
   }, []);
 
+  // Track property count to only re-render markers when the actual data changes
+  const prevGeoCountRef = useRef(0);
+
   const renderMarkers = useCallback(
     (zoom: number) => {
       if (!mapRef.current || !isMapReady) return;
       clearMarkers();
 
-      const clusters = clusterProperties(geoProperties, zoom);
+      const clusters = clusterProperties(geoPropsRef.current, zoom);
 
       for (const cluster of clusters) {
         const isSingle = cluster.properties.length === 1;
@@ -386,12 +404,15 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
         markersRef.current.push(marker);
       }
     },
-    [geoProperties, clearMarkers, isMapReady]
+    [clearMarkers, isMapReady]
   );
 
+  // Re-render markers when zoom changes or when property data actually changes
   useEffect(() => {
+    const currentCount = geoProperties.length;
     renderMarkers(currentZoom);
-  }, [renderMarkers, currentZoom]);
+    prevGeoCountRef.current = currentCount;
+  }, [renderMarkers, currentZoom, geoProperties]);
 
   const handleMapReady = useCallback(
     (map: google.maps.Map) => {
@@ -502,14 +523,14 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
     setNearbyProperties([]);
     setLocationState("idle");
     setLocationError(null);
-    onNearbyChange?.(false, []);
+    onNearbyChangeRef.current?.(false, []);
 
     // Reset map view
     if (mapRef.current) {
       mapRef.current.panTo(NC_CENTER);
       mapRef.current.setZoom(NC_ZOOM);
     }
-  }, [onNearbyChange]);
+  }, []);
 
   const recenterOnUser = useCallback(() => {
     if (userLocation && mapRef.current) {
@@ -726,7 +747,7 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
                             tiers: { [p.priority_tier]: 1 },
                           });
                         }
-                        onPropertyClick?.(p.property_id);
+                        onPropertyClickRef.current?.(p.property_id);
                       }}
                     >
                       <div className="flex items-start justify-between gap-2">
