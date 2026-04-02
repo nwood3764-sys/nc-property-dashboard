@@ -20,3 +20,8 @@
 - [x] Remove Insured-Previously Subsidized property from dataset
 - [x] Update summary.json to reflect new totals
 - [x] Verify dashboard loads correctly with filtered dataset
+- [x] Map sync should update metric tiles (not just the table)
+- [x] Map sync should update charts (county, score, building type, etc.)
+- [x] Map sync should update the entire dashboard view to only show map-visible properties
+- [x] Cluster click filter should also update tiles and charts
+- [x] Verify table is properly filtering to map-visible properties

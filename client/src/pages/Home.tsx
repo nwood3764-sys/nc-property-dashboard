@@ -51,14 +51,106 @@ import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663414053285/JQD4rA2CyVu8NYLQfUVcQm/hero-nc-properties-Y7pDgfAm2FyZMqQTf4db3A.webp";
 const HURRICANE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663414053285/JQD4rA2CyVu8NYLQfUVcQm/hurricane-impact-WmGfHhK8G8mV6xJCg5mTqW.webp";
 
+// Helper to compute summary stats from a property array
+function computeStats(fp: any[]) {
+  const totalUnits = fp.reduce((s: number, p: any) => s + (p.total_unit_count || 0), 0);
+  const totalAssistedUnits = fp.reduce((s: number, p: any) => s + (p.total_assisted_unit_count || 0), 0);
+  return {
+    total: fp.length,
+    critical: fp.filter((p: any) => p.priority_tier === "Critical").length,
+    high: fp.filter((p: any) => p.priority_tier === "High").length,
+    medium: fp.filter((p: any) => p.priority_tier === "Medium").length,
+    low: fp.filter((p: any) => p.priority_tier === "Low").length,
+    disasterAffected: fp.filter((p: any) => p.any_disaster).length,
+    subsidized: fp.filter((p: any) => p.is_subsidized_ind).length,
+    avgScore: fp.length > 0 ? Math.round(fp.reduce((s: number, p: any) => s + p.total_priority_score, 0) / fp.length) : 0,
+    floodZone: fp.filter((p: any) => p.coastal_flood_zone).length,
+    totalUnits,
+    totalAssistedUnits,
+    lihtcCount: fp.filter((p: any) => p.is_lihtc).length,
+    lihtcOnlyCount: fp.filter((p: any) => p.category_clean === "LIHTC").length,
+    hudOnlyCount: fp.filter((p: any) => !p.is_lihtc).length,
+    hudLihtcOverlap: fp.filter((p: any) => p.is_lihtc && p.category_clean !== "LIHTC").length,
+    withOrg: fp.filter((p: any) => (p.organization || '').trim()).length,
+    uniqueOrgs: new Set(fp.filter((p: any) => (p.organization || '').trim()).map((p: any) => p.organization!)).size,
+    withContract: fp.filter((p: any) => p.contractExpiration).length,
+    expiringIn5Yr: fp.filter((p: any) => p.yearsUntilExpiration != null && p.yearsUntilExpiration <= 5).length,
+    withEnergyBurden: fp.filter((p: any) => p.energyBurdenPct != null).length,
+    highEnergyBurden: fp.filter((p: any) => (p.energyBurdenPct ?? 0) >= 4.0).length,
+    avgEnergyBurden: fp.filter((p: any) => p.energyBurdenPct != null).length > 0
+      ? Math.round(fp.filter((p: any) => p.energyBurdenPct != null).reduce((s: number, p: any) => s + (p.energyBurdenPct ?? 0), 0) / fp.filter((p: any) => p.energyBurdenPct != null).length * 10) / 10
+      : 0,
+    avgAge: (() => {
+      const withAge = fp.filter((p: any) => p.property_age_years != null);
+      return withAge.length > 0 ? Math.round(withAge.reduce((s: number, p: any) => s + p.property_age_years!, 0) / withAge.length) : 0;
+    })(),
+    medianAge: (() => {
+      const ages = fp.filter((p: any) => p.property_age_years != null).map((p: any) => p.property_age_years!).sort((a: number, b: number) => a - b);
+      if (ages.length === 0) return 0;
+      const mid = Math.floor(ages.length / 2);
+      return ages.length % 2 !== 0 ? ages[mid] : Math.round((ages[mid - 1] + ages[mid]) / 2);
+    })(),
+  };
+}
+
+// Helper to compute county breakdown from a property array
+function computeCountyBreakdown(fp: any[]) {
+  const map = new Map<string, { total: number; critical: number; high: number; medium: number; low: number }>();
+  fp.forEach((p: any) => {
+    const c = p.county_clean || "Unknown";
+    if (!map.has(c)) map.set(c, { total: 0, critical: 0, high: 0, medium: 0, low: 0 });
+    const entry = map.get(c)!;
+    entry.total++;
+    if (p.priority_tier === "Critical") entry.critical++;
+    else if (p.priority_tier === "High") entry.high++;
+    else if (p.priority_tier === "Medium") entry.medium++;
+    else entry.low++;
+  });
+  return Array.from(map.entries())
+    .map(([county, data]) => ({ county, ...data }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 20);
+}
+
+// Helper to compute building type breakdown
+function computeBuildingTypeBreakdown(fp: any[]) {
+  const map = new Map<string, number>();
+  fp.forEach((p: any) => {
+    const bt = p.building_type || "Unknown";
+    map.set(bt, (map.get(bt) || 0) + 1);
+  });
+  return Array.from(map.entries())
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// Helper to compute org breakdown
+function computeOrgBreakdown(fp: any[]) {
+  const map = new Map<string, { total: number; units: number; critical: number; high: number }>();
+  fp.forEach((p: any) => {
+    const org = (p.organization || '').trim();
+    if (!org) return;
+    if (!map.has(org)) map.set(org, { total: 0, units: 0, critical: 0, high: 0 });
+    const entry = map.get(org)!;
+    entry.total++;
+    entry.units += p.total_unit_count || 0;
+    if (p.priority_tier === 'Critical') entry.critical++;
+    else if (p.priority_tier === 'High') entry.high++;
+  });
+  return Array.from(map.entries())
+    .map(([org, data]) => ({ org, ...data }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 20);
+}
+
 export default function Home() {
   const {
     properties,
     allFiltered,
-    stats,
-    countyBreakdown,
-    buildingTypeBreakdown,
-    orgBreakdown,
+    stats: baseStats,
+    countyBreakdown: baseCountyBreakdown,
+    buildingTypeBreakdown: baseBuildingTypeBreakdown,
+    orgBreakdown: baseOrgBreakdown,
     sortField,
     sortDirection,
     handleSort,
@@ -81,7 +173,6 @@ export default function Home() {
   const [showCharts, setShowCharts] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
   const { getStatus, setStatus, setBulkStatus, getCounts } = useOutreachStatus();
-  const outreachCounts = getCounts();
   const { getNote, setNote, getNotesCount } = usePropertyNotes();
 
   // Comparison state
@@ -133,11 +224,11 @@ export default function Home() {
 
   // Nearby mode state — syncs map GPS with the property table
   const [nearbyMode, setNearbyMode] = useState(false);
-  const [nearbyIds, setNearbyIds] = useState<Map<number, number>>(new Map()); // propertyId -> distance
+  const [nearbyIds, setNearbyIds] = useState<Map<number, number>>(new Map());
   const [highlightId, setHighlightId] = useState<number | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Map sync state — filters table to match map viewport or cluster selection
+  // Map sync state — filters entire dashboard to match map viewport or cluster selection
   const [mapSyncEnabled, setMapSyncEnabled] = useState(false);
   const [visiblePropertyIds, setVisiblePropertyIds] = useState<Set<number> | null>(null);
   const [clusterPropertyIds, setClusterPropertyIds] = useState<Set<number> | null>(null);
@@ -154,20 +245,12 @@ export default function Home() {
     }
   }, []);
 
-  // When nearby mode is active, show only nearby properties in the table (sorted by distance)
-  const nearbyProperties = useMemo(() => {
-    if (!nearbyMode || nearbyIds.size === 0) return null;
-    return allFiltered
-      .filter(p => nearbyIds.has(p.property_id))
-      .sort((a, b) => (nearbyIds.get(a.property_id) ?? 999) - (nearbyIds.get(b.property_id) ?? 999));
-  }, [nearbyMode, nearbyIds, allFiltered]);
-
-  // Map bounds change handler — called when map pans/zooms
+  // Map bounds change handler
   const handleBoundsChange = useCallback((ids: number[]) => {
     setVisiblePropertyIds(new Set(ids));
   }, []);
 
-  // Cluster click handler — called when a cluster marker is clicked
+  // Cluster click handler
   const handleClusterSelect = useCallback((ids: number[]) => {
     if (ids.length === 0) {
       setClusterPropertyIds(null);
@@ -176,33 +259,71 @@ export default function Home() {
     }
   }, []);
 
-  // Properties filtered by map viewport when sync is enabled
-  const boundsFilteredProperties = useMemo(() => {
-    if (!mapSyncEnabled || !visiblePropertyIds) return null;
-    return allFiltered.filter(p => visiblePropertyIds.has(p.property_id));
-  }, [mapSyncEnabled, visiblePropertyIds, allFiltered]);
+  // ===== CORE: displayProperties is the single source of truth for the entire dashboard =====
+  // Priority: nearby > cluster > bounds sync > all filtered
+  const displayProperties = useMemo(() => {
+    // Nearby mode — show only nearby properties sorted by distance
+    if (nearbyMode && nearbyIds.size > 0) {
+      return allFiltered
+        .filter(p => nearbyIds.has(p.property_id))
+        .sort((a, b) => (nearbyIds.get(a.property_id) ?? 999) - (nearbyIds.get(b.property_id) ?? 999));
+    }
+    // Cluster filter — show only properties from clicked cluster
+    if (clusterPropertyIds) {
+      return allFiltered.filter(p => clusterPropertyIds.has(p.property_id));
+    }
+    // Map bounds sync — show only properties visible in map viewport
+    if (mapSyncEnabled && visiblePropertyIds) {
+      return allFiltered.filter(p => visiblePropertyIds.has(p.property_id));
+    }
+    // Default — all filtered properties
+    return allFiltered;
+  }, [nearbyMode, nearbyIds, clusterPropertyIds, mapSyncEnabled, visiblePropertyIds, allFiltered]);
 
-  // Properties filtered by cluster selection
-  const clusterFilteredProperties = useMemo(() => {
-    if (!clusterPropertyIds) return null;
-    return allFiltered.filter(p => clusterPropertyIds.has(p.property_id));
-  }, [clusterPropertyIds, allFiltered]);
+  // Whether any map-based filter is active
+  const isMapFiltered = nearbyMode || !!clusterPropertyIds || (mapSyncEnabled && !!visiblePropertyIds);
 
-  // The properties to show in the table — priority: nearby > cluster > bounds sync > normal paginated
-  const tableProperties = nearbyMode && nearbyProperties
-    ? nearbyProperties
-    : clusterFilteredProperties
-      ? clusterFilteredProperties
-      : mapSyncEnabled && boundsFilteredProperties
-        ? boundsFilteredProperties
-        : properties;
+  // Recompute stats from displayProperties when map filter is active, otherwise use base stats
+  const displayStats = useMemo(() => {
+    if (!isMapFiltered) return baseStats;
+    return computeStats(displayProperties);
+  }, [isMapFiltered, displayProperties, baseStats]);
 
-  // Whether any map-based filter is active (for hiding pagination)
-  const isMapFiltered = nearbyMode || !!clusterFilteredProperties || (mapSyncEnabled && !!boundsFilteredProperties);
+  // Recompute chart breakdowns from displayProperties when map filter is active
+  const displayCountyBreakdown = useMemo(() => {
+    if (!isMapFiltered) return baseCountyBreakdown;
+    return computeCountyBreakdown(displayProperties);
+  }, [isMapFiltered, displayProperties, baseCountyBreakdown]);
+
+  const displayBuildingTypeBreakdown = useMemo(() => {
+    if (!isMapFiltered) return baseBuildingTypeBreakdown;
+    return computeBuildingTypeBreakdown(displayProperties);
+  }, [isMapFiltered, displayProperties, baseBuildingTypeBreakdown]);
+
+  const displayOrgBreakdown = useMemo(() => {
+    if (!isMapFiltered) return baseOrgBreakdown;
+    return computeOrgBreakdown(displayProperties);
+  }, [isMapFiltered, displayProperties, baseOrgBreakdown]);
+
+  // Outreach counts scoped to display properties
+  const outreachCounts = useMemo(() => {
+    if (!isMapFiltered) return getCounts();
+    const counts = { contacted: 0, inProgress: 0, complete: 0, total: 0 };
+    displayProperties.forEach(p => {
+      const status = getStatus(p.property_id);
+      if (status === "contacted") { counts.contacted++; counts.total++; }
+      else if (status === "in_progress") { counts.inProgress++; counts.total++; }
+      else if (status === "complete") { counts.complete++; counts.total++; }
+    });
+    return counts;
+  }, [isMapFiltered, displayProperties, getStatus, getCounts]);
+
+  // Table properties — when map filtered, show all display properties (no pagination)
+  // When not map filtered, use normal paginated properties
+  const tableProperties = isMapFiltered ? displayProperties : properties;
 
   const handlePropertyClickFromMap = useCallback((propertyId: number) => {
     setHighlightId(propertyId);
-    // Scroll to the table and the specific row
     setTimeout(() => {
       const row = document.querySelector(`tr[data-property-id="${propertyId}"]`);
       if (row) {
@@ -211,9 +332,17 @@ export default function Home() {
         tableRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 100);
-    // Clear highlight after 3 seconds
     setTimeout(() => setHighlightId(null), 3000);
   }, []);
+
+  // Label for the current map filter mode
+  const mapFilterLabel = nearbyMode
+    ? `Showing ${displayProperties.length} nearby properties`
+    : clusterPropertyIds
+      ? `Showing ${displayProperties.length} properties from cluster`
+      : mapSyncEnabled && visiblePropertyIds
+        ? `Showing ${displayProperties.length} properties in map view`
+        : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -233,7 +362,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <ExportButton properties={allFiltered} getOutreachStatus={getStatus} />
+          <ExportButton properties={displayProperties} getOutreachStatus={getStatus} />
         </div>
       </header>
 
@@ -248,66 +377,95 @@ export default function Home() {
         <div className="absolute inset-0 flex items-center">
           <div className="container">
             <h2 className="font-[Space_Grotesk] text-2xl md:text-3xl font-bold text-white max-w-xl leading-tight">
-              Prioritizing {stats.total.toLocaleString()} North Carolina Properties
+              Prioritizing {displayStats.total.toLocaleString()} North Carolina Properties
             </h2>
             <p className="text-sm text-white/80 mt-2 max-w-lg">
               Identifying older HUD-assisted and LIHTC properties most in need of weatherization upgrades,
               electrification retrofits, and hurricane/flood damage recovery.
             </p>
+            {isMapFiltered && (
+              <p className="text-xs text-white/60 mt-1">
+                {mapFilterLabel} (of {allFiltered.length.toLocaleString()} total filtered)
+              </p>
+            )}
           </div>
         </div>
       </div>
 
       <main className="container py-6 space-y-6">
+        {/* Map Filter Active Banner */}
+        {isMapFiltered && (
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-sm">
+            <Layers className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">
+              Dashboard filtered: {mapFilterLabel}
+            </span>
+            <span className="text-xs text-blue-600">
+              All tiles, charts, and table below reflect this selection
+            </span>
+            {!nearbyMode && (
+              <button
+                onClick={() => {
+                  setClusterPropertyIds(null);
+                  setMapSyncEnabled(false);
+                }}
+                className="ml-auto text-xs font-medium text-blue-700 hover:text-blue-900 underline"
+              >
+                Clear map filter
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Metric Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <MetricCard
             label="Total Properties"
-            value={stats.total}
+            value={displayStats.total}
             icon={<Building2 className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
             accent="oklch(0.94 0.01 250)"
           />
           <MetricCard
             label="Total Units"
-            value={stats.totalUnits}
+            value={displayStats.totalUnits}
             icon={<HomeIcon className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
             accent="oklch(0.94 0.01 250)"
-            sub={`${stats.totalAssistedUnits.toLocaleString()} assisted`}
+            sub={`${displayStats.totalAssistedUnits.toLocaleString()} assisted`}
           />
           <MetricCard
             label="Critical Priority"
-            value={stats.critical}
+            value={displayStats.critical}
             icon={<AlertTriangle className="w-5 h-5 text-white" />}
             accent="oklch(0.50 0.20 25)"
-            sub={`${stats.high} High`}
+            sub={`${displayStats.high} High`}
           />
           <MetricCard
             label="Disaster-Affected"
-            value={stats.disasterAffected}
+            value={displayStats.disasterAffected}
             icon={<CloudLightning className="w-5 h-5 text-white" />}
             accent="oklch(0.55 0.15 240)"
-            sub={`${Math.round((stats.disasterAffected / stats.total) * 100)}% of total`}
+            sub={`${displayStats.total > 0 ? Math.round((displayStats.disasterAffected / displayStats.total) * 100) : 0}% of total`}
           />
           <MetricCard
             label="Subsidized"
-            value={stats.subsidized}
+            value={displayStats.subsidized}
             icon={<Shield className="w-5 h-5 text-white" />}
             accent="oklch(0.45 0.15 155)"
-            sub={`${Math.round((stats.subsidized / stats.total) * 100)}% of total`}
+            sub={`${displayStats.total > 0 ? Math.round((displayStats.subsidized / displayStats.total) * 100) : 0}% of total`}
           />
           <MetricCard
             label="LIHTC Properties"
-            value={stats.lihtcCount}
+            value={displayStats.lihtcCount}
             icon={<TrendingUp className="w-5 h-5 text-white" />}
             accent="oklch(0.50 0.15 140)"
-            sub={`${stats.lihtcOnlyCount} LIHTC-only / ${stats.hudLihtcOverlap} overlap`}
+            sub={`${displayStats.lihtcOnlyCount} LIHTC-only / ${displayStats.hudLihtcOverlap} overlap`}
           />
           <MetricCard
             label="Organizations"
-            value={stats.uniqueOrgs}
+            value={displayStats.uniqueOrgs}
             icon={<Users className="w-5 h-5 text-white" />}
             accent="oklch(0.45 0.12 280)"
-            sub={`${stats.withOrg.toLocaleString()} with org data`}
+            sub={`${displayStats.withOrg.toLocaleString()} with org data`}
           />
           <MetricCard
             label="Outreach Progress"
@@ -322,31 +480,31 @@ export default function Home() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <MetricCard
             label="With Contract Data"
-            value={stats.withContract}
+            value={displayStats.withContract}
             icon={<Clock className="w-5 h-5 text-white" />}
             accent="oklch(0.50 0.15 280)"
-            sub={`${stats.expiringIn5Yr} expiring within 5yr`}
+            sub={`${displayStats.expiringIn5Yr} expiring within 5yr`}
           />
           <MetricCard
             label="High Energy Burden"
-            value={stats.highEnergyBurden}
+            value={displayStats.highEnergyBurden}
             icon={<Zap className="w-5 h-5 text-white" />}
             accent="oklch(0.55 0.18 40)"
-            sub={`Avg ${stats.avgEnergyBurden}% of income`}
+            sub={`Avg ${displayStats.avgEnergyBurden}% of income`}
           />
           <MetricCard
             label="With Energy Data"
-            value={stats.withEnergyBurden}
+            value={displayStats.withEnergyBurden}
             icon={<Zap className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
             accent="oklch(0.94 0.01 250)"
-            sub={`${Math.round((stats.withEnergyBurden / stats.total) * 100)}% coverage`}
+            sub={`${displayStats.total > 0 ? Math.round((displayStats.withEnergyBurden / displayStats.total) * 100) : 0}% coverage`}
           />
           <MetricCard
             label="Avg Property Age"
-            value={`${stats.avgAge}yr`}
+            value={`${displayStats.avgAge}yr`}
             icon={<Calendar className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
             accent="oklch(0.94 0.01 250)"
-            sub={`Median ${stats.medianAge}yr`}
+            sub={`Median ${displayStats.medianAge}yr`}
           />
         </div>
 
@@ -362,12 +520,12 @@ export default function Home() {
             </button>
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-muted-foreground">
-              {outreachCounts.complete + outreachCounts.contacted + outreachCounts.inProgress} of {stats.total.toLocaleString()} touched
+              {outreachCounts.complete + outreachCounts.contacted + outreachCounts.inProgress} of {displayStats.total.toLocaleString()} touched
             </span>
           </div>
           {showProgress && (
             <OutreachProgressDashboard
-              properties={allFiltered}
+              properties={displayProperties}
               getOutreachStatus={getStatus}
             />
           )}
@@ -385,7 +543,10 @@ export default function Home() {
             </button>
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-muted-foreground">
-              Filtered: {allFiltered.length.toLocaleString()} properties
+              {isMapFiltered
+                ? `${displayProperties.length.toLocaleString()} of ${allFiltered.length.toLocaleString()} properties`
+                : `Filtered: ${allFiltered.length.toLocaleString()} properties`
+              }
             </span>
           </div>
           {showMap && (
@@ -404,14 +565,14 @@ export default function Home() {
                       ? 'bg-[oklch(0.30_0.06_250)] text-white border-[oklch(0.30_0.06_250)]'
                       : 'bg-white text-[oklch(0.30_0.06_250)] border-border hover:bg-muted/50'
                   }`}
-                  title={mapSyncEnabled ? 'Click to stop syncing table with map' : 'Click to sync table with map viewport'}
+                  title={mapSyncEnabled ? 'Click to stop syncing dashboard with map' : 'Click to sync entire dashboard with map viewport'}
                 >
                   <Layers className="w-3.5 h-3.5" />
-                  {mapSyncEnabled ? 'Map Sync On' : 'Sync Table with Map'}
+                  {mapSyncEnabled ? 'Dashboard Sync On' : 'Sync Dashboard with Map'}
                 </button>
                 {mapSyncEnabled && (
                   <span className="text-xs text-muted-foreground">
-                    Pan or zoom the map to filter the table below
+                    Pan or zoom the map — tiles, charts, and table update live
                   </span>
                 )}
                 {clusterPropertyIds && (
@@ -423,6 +584,7 @@ export default function Home() {
                   </button>
                 )}
               </div>
+              {/* Map always receives ALL filtered properties so all markers are visible */}
               <PropertyMap
                 properties={allFiltered}
                 onNearbyChange={handleNearbyChange}
@@ -460,8 +622,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Age Vintage Chart — always visible as a key metric */}
-        <AgeVintageChart properties={allFiltered} />
+        {/* Age Vintage Chart — uses displayProperties */}
+        <AgeVintageChart properties={displayProperties} />
 
         {/* Scoring Methodology */}
         <ScoringMethodology />
@@ -478,20 +640,20 @@ export default function Home() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        {/* Additional Charts */}
+        {/* Additional Charts — all use displayProperties-scoped breakdowns */}
         {showCharts && (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <CountyChart data={countyBreakdown} />
-              <ScoreDistribution properties={allFiltered} />
+              <CountyChart data={displayCountyBreakdown} />
+              <ScoreDistribution properties={displayProperties} />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <BuildingTypeChart data={buildingTypeBreakdown} />
+              <BuildingTypeChart data={displayBuildingTypeBreakdown} />
               <div className="bg-white border border-border rounded-sm shadow-sm p-4">
                 <h3 className="font-[Space_Grotesk] text-sm font-bold text-foreground mb-3">
                   Top Organizations by Property Count
                 </h3>
-                <OrgChart data={orgBreakdown} />
+                <OrgChart data={displayOrgBreakdown} />
               </div>
             </div>
           </>
@@ -508,7 +670,7 @@ export default function Home() {
           uniqueOrganizations={uniqueOrganizations}
           uniqueElectricUtilities={uniqueElectricUtilities}
           uniqueHeatingTypes={uniqueHeatingTypes}
-          resultCount={allFiltered.length}
+          resultCount={displayProperties.length}
         />
 
         {/* Compare Bar */}
@@ -542,15 +704,15 @@ export default function Home() {
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
           onBulkUpdate={handleBulkUpdate}
-          totalFiltered={allFiltered.length}
+          totalFiltered={displayProperties.length}
         />
 
-        {/* Map Filter Banners */}
-        {nearbyMode && nearbyProperties && (
+        {/* Map Filter Context Banners */}
+        {nearbyMode && displayProperties.length > 0 && (
           <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-sm">
             <Navigation className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">
-              Showing {nearbyProperties.length} nearby {nearbyProperties.length === 1 ? 'property' : 'properties'}
+              Showing {displayProperties.length} nearby {displayProperties.length === 1 ? 'property' : 'properties'}
             </span>
             <span className="text-xs text-blue-600">
               sorted by distance from your location
@@ -560,11 +722,11 @@ export default function Home() {
             </span>
           </div>
         )}
-        {!nearbyMode && clusterFilteredProperties && (
+        {!nearbyMode && clusterPropertyIds && (
           <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-sm">
             <Layers className="w-4 h-4 text-amber-600" />
             <span className="text-sm font-medium text-amber-800">
-              Showing {clusterFilteredProperties.length} {clusterFilteredProperties.length === 1 ? 'property' : 'properties'} from selected cluster
+              Showing {displayProperties.length} {displayProperties.length === 1 ? 'property' : 'properties'} from selected cluster
             </span>
             <button
               onClick={() => setClusterPropertyIds(null)}
@@ -574,11 +736,11 @@ export default function Home() {
             </button>
           </div>
         )}
-        {!nearbyMode && !clusterFilteredProperties && mapSyncEnabled && boundsFilteredProperties && (
+        {!nearbyMode && !clusterPropertyIds && mapSyncEnabled && visiblePropertyIds && (
           <div className="flex items-center gap-3 px-4 py-2.5 bg-[oklch(0.96_0.01_250)] border border-[oklch(0.85_0.03_250)] rounded-sm">
             <Layers className="w-4 h-4 text-[oklch(0.40_0.06_250)]" />
             <span className="text-sm font-medium text-[oklch(0.25_0.06_250)]">
-              Showing {boundsFilteredProperties.length} {boundsFilteredProperties.length === 1 ? 'property' : 'properties'} in map view
+              Showing {displayProperties.length} {displayProperties.length === 1 ? 'property' : 'properties'} in map view
             </span>
             <span className="text-xs text-[oklch(0.45_0.04_250)]">
               Pan or zoom the map to update
@@ -590,7 +752,7 @@ export default function Home() {
         <div ref={tableRef}>
           <PropertyTable
             properties={tableProperties}
-            sortField={nearbyMode ? sortField : sortField}
+            sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
             getOutreachStatus={getStatus}
