@@ -14,3 +14,9 @@
 - [x] Clear cluster filter button to reset table
 - [x] Hide pagination when map filter is active
 - [x] Show banner indicating which map filter mode is active
+- [x] Remove Insured-Unsubsidized properties (without LIHTC) from dataset
+- [x] Remove healthcare facilities (nursing homes, assisted living, board & care, hospitals) from dataset
+- [x] Remove Use Restriction properties without active subsidies from dataset
+- [x] Remove Insured-Previously Subsidized property from dataset
+- [x] Update summary.json to reflect new totals
+- [x] Verify dashboard loads correctly with filtered dataset
