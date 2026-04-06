@@ -28,6 +28,7 @@ interface FilterPanelProps {
   uniqueElectricUtilities: string[];
   uniqueHeatingTypes: string[];
   resultCount: number;
+  showDisasterFilters?: boolean;
 }
 
 export default function FilterPanel({
@@ -41,6 +42,7 @@ export default function FilterPanel({
   uniqueElectricUtilities,
   uniqueHeatingTypes,
   resultCount,
+  showDisasterFilters = true,
 }: FilterPanelProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -166,25 +168,27 @@ export default function FilterPanel({
       {/* Expanded filters */}
       {expanded && (
         <div className="border-t border-border px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
-          {/* Hurricane filter */}
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
-              Hurricane / Disaster
-            </label>
-            <div className="space-y-1.5">
-              {disasters.map((d) => (
-                <label key={d} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <Checkbox
-                    checked={filters.disasters.has(d)}
-                    onCheckedChange={() => toggleDisaster(d)}
-                  />
-                  {d === "Helene" ? "Helene (2024)" :
-                   d === "Florence" ? "Florence (2018)" :
-                   d === "Matthew" ? "Matthew (2016)" : "Dorian (2019)"}
-                </label>
-              ))}
+          {/* Hurricane filter — NC only */}
+          {showDisasterFilters && (
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+                Hurricane / Disaster
+              </label>
+              <div className="space-y-1.5">
+                {disasters.map((d) => (
+                  <label key={d} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={filters.disasters.has(d)}
+                      onCheckedChange={() => toggleDisaster(d)}
+                    />
+                    {d === "Helene" ? "Helene (2024)" :
+                     d === "Florence" ? "Florence (2018)" :
+                     d === "Matthew" ? "Matthew (2016)" : "Dorian (2019)"}
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* County filter */}
           <div>
@@ -474,13 +478,15 @@ export default function FilterPanel({
                 />
                 202/811 Elderly/Disabled
               </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <Checkbox
-                  checked={filters.floodZoneOnly}
-                  onCheckedChange={(v) => updateFilter("floodZoneOnly", !!v)}
-                />
-                Coastal Flood Zone
-              </label>
+              {showDisasterFilters && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={filters.floodZoneOnly}
+                    onCheckedChange={(v) => updateFilter("floodZoneOnly", !!v)}
+                  />
+                  Coastal Flood Zone
+                </label>
+              )}
             </div>
           </div>
         </div>

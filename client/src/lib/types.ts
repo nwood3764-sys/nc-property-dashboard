@@ -3,6 +3,7 @@ export interface Property {
   property_name_clean: string;
   address_clean: string;
   city_clean: string;
+  state: string;
   county_clean: string;
   zip_code: string;
   total_unit_count: number;
@@ -87,6 +88,7 @@ export type SortDirection = "asc" | "desc";
 
 export interface Filters {
   search: string;
+  states: Set<string>;
   tiers: Set<string>;
   counties: Set<string>;
   disasters: Set<string>;

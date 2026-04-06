@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 
-export default function ScoringMethodology() {
+interface ScoringMethodologyProps {
+  showDisaster?: boolean;
+}
+
+export default function ScoringMethodology({ showDisaster = true }: ScoringMethodologyProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,25 +33,29 @@ export default function ScoringMethodology() {
                 that would benefit from weatherization or electrification upgrades.
               </p>
             </div>
-            <div>
-              <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Disaster Impact Score (0–35 pts)
-              </h4>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                Based on FEMA disaster declarations for the property's county. Hurricane Helene (2024) adds
-                up to 15 pts, Florence (2018) adds 10 pts, Matthew (2016) adds 7 pts, and Dorian (2019) adds 3 pts.
-                Counties hit by multiple disasters accumulate points.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Flood Risk Score (0–10 pts)
-              </h4>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                Properties in FEMA-designated coastal flood zone counties receive 10 points.
-                These properties face ongoing flood risk requiring resilient building upgrades.
-              </p>
-            </div>
+            {showDisaster && (
+              <div>
+                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Disaster Impact Score (0–35 pts)
+                </h4>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Based on FEMA disaster declarations for the property's county. Hurricane Helene (2024) adds
+                  up to 15 pts, Florence (2018) adds 10 pts, Matthew (2016) adds 7 pts, and Dorian (2019) adds 3 pts.
+                  Counties hit by multiple disasters accumulate points. (NC only)
+                </p>
+              </div>
+            )}
+            {showDisaster && (
+              <div>
+                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Flood Risk Score (0–10 pts)
+                </h4>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Properties in FEMA-designated coastal flood zone counties receive 10 points.
+                  These properties face ongoing flood risk requiring resilient building upgrades. (NC only)
+                </p>
+              </div>
+            )}
             <div>
               <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
                 Weatherization Need Score (0–25 pts)

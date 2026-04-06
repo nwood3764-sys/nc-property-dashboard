@@ -18,7 +18,7 @@ interface ExportButtonProps {
 export default function ExportButton({ properties, getOutreachStatus }: ExportButtonProps) {
   const handleExport = () => {
     const headers = [
-      "Priority Score", "Tier", "Property Name", "Address", "City", "County", "ZIP",
+      "Priority Score", "Tier", "State", "Property Name", "Address", "City", "County", "ZIP",
       "Total Units", "Assisted Units", "Building Type", "Est. Stories", "Est. Buildings",
       "Category", "Occupancy Date", "Age (Years)",
       "FHA Number", "SOA", "Subsidized", "Section 8", "202/811",
@@ -37,7 +37,9 @@ export default function ExportButton({ properties, getOutreachStatus }: ExportBu
     const rows = properties.map((p) => [
       p.total_priority_score,
       p.priority_tier,
+      p.state || 'NC',
       `"${p.property_name_clean}"`,
+
       `"${p.address_clean}"`,
       `"${p.city_clean}"`,
       `"${p.county_clean}"`,
@@ -94,7 +96,7 @@ export default function ExportButton({ properties, getOutreachStatus }: ExportBu
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `nc-property-priorities-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `property-priorities-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

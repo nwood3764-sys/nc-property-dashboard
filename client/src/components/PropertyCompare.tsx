@@ -37,7 +37,10 @@ export default function PropertyCompare({ properties, onRemove, onClose, getOutr
   if (properties.length === 0) return null;
 
   const mapsUrl = (p: Property) =>
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, NC ${p.zip_code}`)}`;
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, ${p.state || 'NC'} ${p.zip_code}`)}`;
+
+  // Show disaster sections only if any compared property is from NC
+  const hasNCProperty = properties.some(p => (p.state || 'NC') === 'NC');
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
@@ -64,7 +67,7 @@ export default function PropertyCompare({ properties, onRemove, onClose, getOutr
                           {p.priority_tier}
                         </span>
                         <div className="text-sm font-bold text-slate-800 leading-tight">{p.property_name_clean}</div>
-                        <div className="text-xs text-slate-500">{p.city_clean}, {p.county_clean} Co.</div>
+                        <div className="text-xs text-slate-500">{p.city_clean}, {p.state || 'NC'} &middot; {p.county_clean} Co.</div>
                       </div>
                       <button onClick={() => onRemove(p.property_id)} className="p-0.5 hover:bg-slate-200 rounded shrink-0">
                         <X className="w-3.5 h-3.5 text-slate-400" />
@@ -75,6 +78,7 @@ export default function PropertyCompare({ properties, onRemove, onClose, getOutr
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              <Row label="State" values={properties.map((p) => p.state || 'NC')} />
               <Row label="Priority Score" values={properties.map((p) => `${p.total_priority_score} / 100`)} highlight />
               <Row label="Property Age" values={properties.map((p) => p.property_age_years != null ? `${p.property_age_years} years` : null)} />
               <Row label="Total Units" values={properties.map((p) => p.total_unit_count)} highlight />
@@ -87,24 +91,32 @@ export default function PropertyCompare({ properties, onRemove, onClose, getOutr
               {/* Scoring */}
               <tr><td colSpan={properties.length + 1} className="px-4 py-2 bg-slate-50 text-xs font-bold text-slate-600 uppercase tracking-wider border-t-2 border-slate-200">Scoring Breakdown</td></tr>
               <Row label="Age Score" values={properties.map((p) => `${p.age_score} / 30`)} />
-              <Row label="Disaster Score" values={properties.map((p) => `${p.disaster_score} / 35`)} highlight />
-              <Row label="Flood Risk Score" values={properties.map((p) => `${p.flood_risk_score} / 10`)} />
+              {hasNCProperty && (
+                <>
+                  <Row label="Disaster Score" values={properties.map((p) => (p.state || 'NC') === 'NC' ? `${p.disaster_score} / 35` : 'N/A')} highlight />
+                  <Row label="Flood Risk Score" values={properties.map((p) => (p.state || 'NC') === 'NC' ? `${p.flood_risk_score} / 10` : 'N/A')} />
+                </>
+              )}
               <Row label="Weatherization Score" values={properties.map((p) => `${p.weatherization_score} / 25`)} highlight />
 
-              {/* Disasters */}
-              <tr><td colSpan={properties.length + 1} className="px-4 py-2 bg-slate-50 text-xs font-bold text-slate-600 uppercase tracking-wider border-t-2 border-slate-200">Disaster Exposure</td></tr>
-              <Row label="Hurricane Helene" values={properties.map((p) => p.helene_affected ? "Yes" : "No")} />
-              <Row label="Hurricane Florence" values={properties.map((p) => p.florence_affected ? "Yes" : "No")} highlight />
-              <Row label="Hurricane Matthew" values={properties.map((p) => p.matthew_affected ? "Yes" : "No")} />
-              <Row label="Hurricane Dorian" values={properties.map((p) => p.dorian_affected ? "Yes" : "No")} highlight />
-              <Row label="Coastal Flood Zone" values={properties.map((p) => p.coastal_flood_zone ? "Yes" : "No")} />
+              {/* Disasters — only show if any NC property */}
+              {hasNCProperty && (
+                <>
+                  <tr><td colSpan={properties.length + 1} className="px-4 py-2 bg-slate-50 text-xs font-bold text-slate-600 uppercase tracking-wider border-t-2 border-slate-200">Disaster Exposure (NC Only)</td></tr>
+                  <Row label="Hurricane Helene" values={properties.map((p) => (p.state || 'NC') === 'NC' ? (p.helene_affected ? "Yes" : "No") : 'N/A')} />
+                  <Row label="Hurricane Florence" values={properties.map((p) => (p.state || 'NC') === 'NC' ? (p.florence_affected ? "Yes" : "No") : 'N/A')} highlight />
+                  <Row label="Hurricane Matthew" values={properties.map((p) => (p.state || 'NC') === 'NC' ? (p.matthew_affected ? "Yes" : "No") : 'N/A')} />
+                  <Row label="Hurricane Dorian" values={properties.map((p) => (p.state || 'NC') === 'NC' ? (p.dorian_affected ? "Yes" : "No") : 'N/A')} highlight />
+                  <Row label="Coastal Flood Zone" values={properties.map((p) => (p.state || 'NC') === 'NC' ? (p.coastal_flood_zone ? "Yes" : "No") : 'N/A')} />
+                </>
+              )}
 
               {/* Energy & Utilities */}
               <tr><td colSpan={properties.length + 1} className="px-4 py-2 bg-slate-50 text-xs font-bold text-slate-600 uppercase tracking-wider border-t-2 border-slate-200">Energy & Utilities</td></tr>
               <Row label="Energy Burden" values={properties.map((p) => p.energyBurdenPct != null ? `${p.energyBurdenPct}%` : null)} />
               <Row label="Avg Monthly Energy" values={properties.map((p) => p.avgMonthlyEnergy != null ? `$${p.avgMonthlyEnergy}` : null)} highlight />
               <Row label="Electric Utility" values={properties.map((p) => p.electricUtility)} />
-              <Row label="Electric Rate" values={properties.map((p) => p.electricRate != null ? `$${(p.electricRate * 100).toFixed(1)}¢/kWh` : null)} highlight />
+              <Row label="Electric Rate" values={properties.map((p) => p.electricRate != null ? `${(p.electricRate * 100).toFixed(1)}¢/kWh` : null)} highlight />
               <Row label="Gas Utility" values={properties.map((p) => p.gasUtility || "No gas service")} />
               <Row label="Heating System (Est.)" values={properties.map((p) => p.heatingSystemEstimate)} highlight />
 

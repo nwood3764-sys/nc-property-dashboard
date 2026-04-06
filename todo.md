@@ -25,3 +25,23 @@
 - [x] Map sync should update the entire dashboard view to only show map-visible properties
 - [x] Cluster click filter should also update tiles and charts
 - [x] Verify table is properly filtering to map-visible properties
+- [x] Gather HUD multifamily property data for Wisconsin
+- [x] Gather HUD multifamily property data for Michigan
+- [x] Gather LIHTC property data for Wisconsin
+- [x] Gather LIHTC property data for Michigan
+- [x] Apply same eligibility filters (remove healthcare, FHA-only, etc.)
+- [x] Apply priority scoring and tier assignment to WI/MI properties (no disaster scoring)
+- [x] Disaster scoring NC-only per user request
+- [x] Enrich with energy burden data for WI/MI
+- [x] Enrich with contract expiration data for WI/MI (included where available from HUD API)
+- [x] Enrich with organization/owner data for WI/MI
+- [x] Merge WI/MI properties into existing dataset
+- [x] Add state filter to dashboard
+- [x] Update map to support multi-state view (center, zoom)
+- [x] Update dashboard title/hero for multi-state
+- [x] Run tests and verify expanded dataset (36 tests passing)
+- [ ] Save checkpoint with WI/MI data
+- [x] Make disaster/hurricane scoring NC-only (remove from WI/MI scoring)
+- [x] Hide disaster-related metric tiles when non-NC state is selected
+- [x] Hide disaster-related chart elements when non-NC state is selected
+- [x] Hide hurricane-specific columns in table when non-NC state is selected

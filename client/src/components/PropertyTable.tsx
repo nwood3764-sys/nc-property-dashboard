@@ -23,6 +23,7 @@ interface PropertyTableProps {
   compareIds?: Set<number>;
   onToggleCompare?: (id: number) => void;
   highlightId?: number | null;
+  showDisasterColumn?: boolean;
 }
 
 function SortIcon({ field, currentField, direction }: { field: SortField; currentField: SortField; direction: SortDirection }) {
@@ -72,7 +73,7 @@ function ExpandedRow({ property, getNote, setNote }: { property: Property; getNo
                 </p>
               )}
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, NC ${p.zip_code}`)}`}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, ${p.state || 'NC'} ${p.zip_code}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
@@ -318,7 +319,7 @@ function ExpandedRow({ property, getNote, setNote }: { property: Property; getNo
   );
 }
 
-export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect, getNote, setNote, compareIds, onToggleCompare, highlightId }: PropertyTableProps) {
+export default function PropertyTable({ properties, sortField, sortDirection, onSort, getOutreachStatus, setOutreachStatus, selectedIds, onToggleSelect, getNote, setNote, compareIds, onToggleCompare, highlightId, showDisasterColumn = true }: PropertyTableProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [, setLocation] = useLocation();
 
@@ -385,7 +386,7 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                   Age <SortIcon field="property_age_years" currentField={sortField} direction={sortDirection} />
                 </span>
               </th>
-              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Disasters</th>
+              {showDisasterColumn && <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Disasters</th>}
               <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Structure</th>
               <th
                 className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
@@ -439,7 +440,7 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                   <td className="px-3 py-3">
                     <div className="max-w-[220px]">
                       <p className="font-medium text-foreground truncate">{p.property_name_clean}</p>
-                      <p className="text-xs text-muted-foreground truncate">{p.city_clean}, NC {p.zip_code}</p>
+                      <p className="text-xs text-muted-foreground truncate">{p.city_clean}, {p.state || 'NC'} {p.zip_code}</p>
                     </div>
                   </td>
                   <td className="px-3 py-3 text-sm">{p.county_clean}</td>
@@ -462,9 +463,11 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                   <td className="px-3 py-3 text-sm tabular-nums">
                     {p.property_age_years != null ? `${p.property_age_years}yr` : "\u2014"}
                   </td>
-                  <td className="px-3 py-3">
-                    <DisasterBadges property={p} />
-                  </td>
+                  {showDisasterColumn && (
+                    <td className="px-3 py-3">
+                      <DisasterBadges property={p} />
+                    </td>
+                  )}
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
                       <span className="flex items-center gap-0.5" title="Estimated stories">

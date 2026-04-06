@@ -90,7 +90,7 @@ function ExpandedRow({ property }: { property: Property }) {
               {p.occupancy_date && <p><span className="text-muted-foreground">Occupancy Date:</span> {p.occupancy_date}</p>}
               {p.property_age_years != null && <p><span className="text-muted-foreground">Age:</span> {p.property_age_years} years</p>}
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, NC ${p.zip_code}`)}`}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, ${(p as any).state || 'NC'} ${p.zip_code}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
@@ -579,7 +579,7 @@ export default function OrgDetail() {
                       <td className="px-3 py-3">
                         <div className="max-w-[220px]">
                           <p className="font-medium text-foreground truncate">{p.property_name_clean}</p>
-                          <p className="text-xs text-muted-foreground truncate">{p.city_clean}, NC {p.zip_code}</p>
+                          <p className="text-xs text-muted-foreground truncate">{p.city_clean}, {(p as any).state || 'NC'} {p.zip_code}</p>
                         </div>
                       </td>
                       <td className="px-3 py-3 text-sm">{p.county_clean}</td>

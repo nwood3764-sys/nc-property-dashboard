@@ -6,6 +6,7 @@ const allProperties = propertiesData as Property[];
 
 const defaultFilters: Filters = {
   search: "",
+  states: new Set<string>(),
   tiers: new Set<string>(),
   counties: new Set<string>(),
   disasters: new Set<string>(),
@@ -27,6 +28,13 @@ const defaultFilters: Filters = {
   hasGasService: "all",
 };
 
+// State display names
+export const STATE_NAMES: Record<string, string> = {
+  NC: "North Carolina",
+  WI: "Wisconsin",
+  MI: "Michigan",
+};
+
 export function usePropertyData() {
   const [sortField, setSortField] = useState<SortField>("total_priority_score");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -34,43 +42,67 @@ export function usePropertyData() {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
-  // Unique values for filter dropdowns
-  const uniqueCounties = useMemo(() => {
-    return Array.from(new Set(allProperties.map((p) => p.county_clean))).filter(Boolean).sort();
+  // Unique states
+  const uniqueStates = useMemo(() => {
+    return Array.from(new Set(allProperties.map((p) => p.state))).filter(Boolean).sort();
   }, []);
+
+  // Determine which states are currently selected (for conditional UI)
+  const selectedStates = useMemo(() => {
+    if (filters.states.size === 0) return new Set(uniqueStates); // all states
+    return filters.states;
+  }, [filters.states, uniqueStates]);
+
+  // Whether NC is included in the current view
+  const isNCVisible = selectedStates.has("NC");
+
+  // Unique values for filter dropdowns — scoped to selected states
+  const stateFilteredProperties = useMemo(() => {
+    if (filters.states.size === 0) return allProperties;
+    return allProperties.filter((p) => filters.states.has(p.state));
+  }, [filters.states]);
+
+  const uniqueCounties = useMemo(() => {
+    return Array.from(new Set(stateFilteredProperties.map((p) => p.county_clean))).filter(Boolean).sort();
+  }, [stateFilteredProperties]);
 
   const uniqueCategories = useMemo(() => {
-    return Array.from(new Set(allProperties.map((p) => p.category_clean))).filter(Boolean).sort();
-  }, []);
+    return Array.from(new Set(stateFilteredProperties.map((p) => p.category_clean))).filter(Boolean).sort();
+  }, [stateFilteredProperties]);
 
   const uniqueBuildingTypes = useMemo(() => {
-    return Array.from(new Set(allProperties.map((p) => p.building_type))).filter(Boolean).sort();
-  }, []);
+    return Array.from(new Set(stateFilteredProperties.map((p) => p.building_type))).filter(Boolean).sort();
+  }, [stateFilteredProperties]);
 
   const uniqueElectricUtilities = useMemo(() => {
-    return Array.from(new Set(allProperties.map((p) => p.electricUtility).filter(Boolean) as string[])).sort();
-  }, []);
+    return Array.from(new Set(stateFilteredProperties.map((p) => p.electricUtility).filter(Boolean) as string[])).sort();
+  }, [stateFilteredProperties]);
 
   const uniqueHeatingTypes = useMemo(() => {
-    return Array.from(new Set(allProperties.map((p) => p.heatingSystemEstimate).filter(Boolean) as string[])).sort();
-  }, []);
+    return Array.from(new Set(stateFilteredProperties.map((p) => p.heatingSystemEstimate).filter(Boolean) as string[])).sort();
+  }, [stateFilteredProperties]);
 
   const uniqueOrganizations = useMemo(() => {
     const orgMap = new Map<string, number>();
-    allProperties.forEach((p) => {
+    stateFilteredProperties.forEach((p) => {
       const org = (p.organization || '').trim();
       if (org) orgMap.set(org, (orgMap.get(org) || 0) + 1);
     });
     return Array.from(orgMap.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
-  }, []);
+  }, [stateFilteredProperties]);
 
   // Apply filters
   const filteredProperties = useMemo(() => {
     let result = allProperties;
 
-    // Search — also search building type
+    // State filter
+    if (filters.states.size > 0) {
+      result = result.filter((p) => filters.states.has(p.state));
+    }
+
+    // Search — also search building type and state
     if (filters.search) {
       const q = filters.search.toLowerCase();
       result = result.filter(
@@ -79,6 +111,7 @@ export function usePropertyData() {
           p.address_clean.toLowerCase().includes(q) ||
           p.city_clean.toLowerCase().includes(q) ||
           p.county_clean.toLowerCase().includes(q) ||
+          (p.state && p.state.toLowerCase().includes(q)) ||
           String(p.zip_code).includes(q) ||
           String(p.property_id).includes(q) ||
           (p.building_type && p.building_type.toLowerCase().includes(q)) ||
@@ -96,7 +129,7 @@ export function usePropertyData() {
       result = result.filter((p) => filters.counties.has(p.county_clean));
     }
 
-    // Disaster filter
+    // Disaster filter (NC-only data, but filter still works on the boolean fields)
     if (filters.disasters.size > 0) {
       result = result.filter((p) => {
         if (filters.disasters.has("Helene") && p.helene_affected) return true;
@@ -328,6 +361,9 @@ export function usePropertyData() {
     setPage,
     totalPages,
     pageSize,
+    uniqueStates,
+    selectedStates,
+    isNCVisible,
     uniqueCounties,
     uniqueCategories,
     uniqueBuildingTypes,

@@ -39,9 +39,16 @@ const TIER_Z: Record<string, number> = {
   Low: 1,
 };
 
-// NC center
-const NC_CENTER = { lat: 35.55, lng: -79.39 };
-const NC_ZOOM = 7;
+// State centers for initial map positioning
+const STATE_CENTERS: Record<string, { lat: number; lng: number; zoom: number }> = {
+  NC: { lat: 35.55, lng: -79.39, zoom: 7 },
+  WI: { lat: 44.5, lng: -89.5, zoom: 7 },
+  MI: { lat: 44.3, lng: -84.6, zoom: 7 },
+};
+
+// Default center for multi-state view (roughly center of NC/WI/MI)
+const MULTI_STATE_CENTER = { lat: 40.5, lng: -84.0 };
+const MULTI_STATE_ZOOM = 5;
 
 // Radius options in miles
 const RADIUS_OPTIONS = [0.5, 1, 2, 5, 10, 25];
@@ -231,7 +238,18 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
   onClusterSelectRef.current = onClusterSelect;
 
   const [selectedCluster, setSelectedCluster] = useState<ClusterGroup | null>(null);
-  const [currentZoom, setCurrentZoom] = useState(NC_ZOOM);
+  // Determine initial center/zoom from properties
+  const initialView = useMemo(() => {
+    const states = new Set(properties.map(p => (p as any).state).filter(Boolean));
+    if (states.size === 1) {
+      const st = Array.from(states)[0];
+      const sc = STATE_CENTERS[st];
+      if (sc) return { center: { lat: sc.lat, lng: sc.lng }, zoom: sc.zoom };
+    }
+    return { center: MULTI_STATE_CENTER, zoom: MULTI_STATE_ZOOM };
+  }, [properties]);
+
+  const [currentZoom, setCurrentZoom] = useState(initialView.zoom);
   const [isMapReady, setIsMapReady] = useState(false);
 
   // GPS / Location state
@@ -555,8 +573,8 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
 
     // Reset map view
     if (mapRef.current) {
-      mapRef.current.panTo(NC_CENTER);
-      mapRef.current.setZoom(NC_ZOOM);
+      mapRef.current.panTo(initialView.center);
+      mapRef.current.setZoom(initialView.zoom);
     }
   }, []);
 
@@ -706,8 +724,8 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
       <div className="relative">
         <MapView
           className="h-[480px]"
-          initialCenter={NC_CENTER}
-          initialZoom={NC_ZOOM}
+          initialCenter={initialView.center}
+          initialZoom={initialView.zoom}
           onMapReady={handleMapReady}
         />
 
@@ -890,7 +908,7 @@ export default function PropertyMap({ properties, onNearbyChange, onPropertyClic
                       )}
                     </div>
                     <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, NC ${p.zip_code}`)}`}
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.address_clean}, ${p.city_clean}, ${(p as any).state || 'NC'} ${p.zip_code}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 mt-1 text-[10px] text-[oklch(0.55_0.15_240)] hover:underline"

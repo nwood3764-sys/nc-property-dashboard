@@ -1,12 +1,12 @@
 /*
- * NC Property Outreach Priority Dashboard
+ * Property Outreach Priority Dashboard
  * Design: "Civic Blueprint" — Government Modernist
  * Colors: Navy (#1B3A5C) primary, white canvas, tier-coded alerts
  * Typography: Space Grotesk headings, Work Sans body
  * Layout: Wide single-column, sticky header, summary → map → charts → filters → table
  */
 
-import { usePropertyData } from "@/hooks/usePropertyData";
+import { usePropertyData, STATE_NAMES } from "@/hooks/usePropertyData";
 import MetricCard from "@/components/MetricCard";
 import FilterPanel from "@/components/FilterPanel";
 import PropertyTable from "@/components/PropertyTable";
@@ -40,13 +40,11 @@ import {
   Clock,
   Zap,
   GitCompare,
-  StickyNote,
-  Flame,
-  Plug,
   Navigation,
   Layers,
+  Globe,
 } from "lucide-react";
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663414053285/JQD4rA2CyVu8NYLQfUVcQm/hero-nc-properties-Y7pDgfAm2FyZMqQTf4db3A.webp";
 const HURRICANE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663414053285/JQD4rA2CyVu8NYLQfUVcQm/hurricane-impact-WmGfHhK8G8mV6xJCg5mTqW.webp";
@@ -143,6 +141,21 @@ function computeOrgBreakdown(fp: any[]) {
     .slice(0, 20);
 }
 
+// Build a label for the selected states
+function stateLabel(selectedStates: Set<string>, allStates: string[]): string {
+  if (selectedStates.size === 0 || selectedStates.size === allStates.length) {
+    return allStates.map(s => s).join(", ");
+  }
+  return Array.from(selectedStates).join(", ");
+}
+
+function stateFullLabel(selectedStates: Set<string>, allStates: string[]): string {
+  const active = selectedStates.size === 0 || selectedStates.size === allStates.length
+    ? allStates
+    : Array.from(selectedStates);
+  return active.map(s => STATE_NAMES[s] || s).join(", ");
+}
+
 export default function Home() {
   const {
     properties,
@@ -161,6 +174,9 @@ export default function Home() {
     setPage,
     totalPages,
     pageSize,
+    uniqueStates,
+    selectedStates,
+    isNCVisible,
     uniqueCounties,
     uniqueCategories,
     uniqueBuildingTypes,
@@ -174,6 +190,11 @@ export default function Home() {
   const [showProgress, setShowProgress] = useState(false);
   const { getStatus, setStatus, setBulkStatus, getCounts } = useOutreachStatus();
   const { getNote, setNote, getNotesCount } = usePropertyNotes();
+
+  // Whether NC is the ONLY selected state (for NC-exclusive elements)
+  const isNCOnly = selectedStates.size === 1 && selectedStates.has("NC");
+  // Whether NC is included at all (for showing disaster data alongside other states)
+  const showDisasterElements = isNCVisible;
 
   // Comparison state
   const [compareIds, setCompareIds] = useState<Set<number>>(new Set());
@@ -262,7 +283,7 @@ export default function Home() {
   // ===== CORE: displayProperties is the single source of truth for the entire dashboard =====
   // Priority: nearby > cluster > bounds sync > all filtered
   const displayProperties = useMemo(() => {
-    // Nearby mode — show only nearby properties sorted by distance
+    // Nearby mode — show only nearby properties
     if (nearbyMode && nearbyIds.size > 0) {
       return allFiltered
         .filter(p => nearbyIds.has(p.property_id))
@@ -344,6 +365,30 @@ export default function Home() {
         ? `Showing ${displayProperties.length} properties in map view`
         : null;
 
+  // Dynamic title based on selected states
+  const headerTitle = useMemo(() => {
+    const active = filters.states.size === 0 ? uniqueStates : Array.from(filters.states);
+    if (active.length === 1) {
+      return `${STATE_NAMES[active[0]] || active[0]} Property Outreach Dashboard`;
+    }
+    return "Multi-State Property Outreach Dashboard";
+  }, [filters.states, uniqueStates]);
+
+  const heroTitle = useMemo(() => {
+    const active = filters.states.size === 0 ? uniqueStates : Array.from(filters.states);
+    if (active.length === 1) {
+      return `Prioritizing ${displayStats.total.toLocaleString()} ${STATE_NAMES[active[0]] || active[0]} Properties`;
+    }
+    return `Prioritizing ${displayStats.total.toLocaleString()} Properties Across ${active.length} States`;
+  }, [filters.states, uniqueStates, displayStats.total]);
+
+  const heroSubtitle = useMemo(() => {
+    if (isNCOnly) {
+      return "Identifying older HUD-assisted and LIHTC properties most in need of weatherization upgrades, electrification retrofits, and hurricane/flood damage recovery.";
+    }
+    return "Identifying older HUD-assisted and LIHTC properties most in need of weatherization upgrades and electrification retrofits.";
+  }, [isNCOnly]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -355,14 +400,62 @@ export default function Home() {
             </div>
             <div>
               <h1 className="font-[Space_Grotesk] text-lg font-bold leading-tight">
-                NC Property Outreach Dashboard
+                {headerTitle}
               </h1>
               <p className="text-xs text-white/60">
-                Weatherization, Electrification & Disaster Recovery Prioritization
+                Weatherization, Electrification{isNCOnly ? " & Disaster Recovery" : ""} Prioritization
               </p>
             </div>
           </div>
-          <ExportButton properties={displayProperties} getOutreachStatus={getStatus} />
+          <div className="flex items-center gap-3">
+            {/* State Selector */}
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-4 h-4 text-white/60" />
+              {uniqueStates.map((st) => {
+                const isActive = filters.states.size === 0 || filters.states.has(st);
+                return (
+                  <button
+                    key={st}
+                    onClick={() => {
+                      const next = new Set(filters.states);
+                      if (next.size === 0) {
+                        // Currently showing all — select only this state
+                        uniqueStates.forEach(s => { if (s !== st) next.add(s); });
+                        // Actually, let's toggle to show only this state
+                        updateFilter("states", new Set([st]));
+                        return;
+                      }
+                      if (next.has(st)) {
+                        next.delete(st);
+                        if (next.size === 0) {
+                          // Don't allow empty — show all
+                          updateFilter("states", new Set<string>());
+                          return;
+                        }
+                      } else {
+                        next.add(st);
+                        if (next.size === uniqueStates.length) {
+                          // All selected — reset to show all
+                          updateFilter("states", new Set<string>());
+                          return;
+                        }
+                      }
+                      updateFilter("states", next);
+                    }}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-sm transition-colors ${
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60"
+                    }`}
+                    title={STATE_NAMES[st] || st}
+                  >
+                    {st}
+                  </button>
+                );
+              })}
+            </div>
+            <ExportButton properties={displayProperties} getOutreachStatus={getStatus} />
+          </div>
         </div>
       </header>
 
@@ -370,18 +463,17 @@ export default function Home() {
       <div className="relative h-40 md:h-52 overflow-hidden">
         <img
           src={HERO_IMG}
-          alt="North Carolina properties landscape"
+          alt="Properties landscape"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.22_0.06_250)]/80 to-[oklch(0.22_0.06_250)]/40" />
         <div className="absolute inset-0 flex items-center">
           <div className="container">
             <h2 className="font-[Space_Grotesk] text-2xl md:text-3xl font-bold text-white max-w-xl leading-tight">
-              Prioritizing {displayStats.total.toLocaleString()} North Carolina Properties
+              {heroTitle}
             </h2>
             <p className="text-sm text-white/80 mt-2 max-w-lg">
-              Identifying older HUD-assisted and LIHTC properties most in need of weatherization upgrades,
-              electrification retrofits, and hurricane/flood damage recovery.
+              {heroSubtitle}
             </p>
             {isMapFiltered && (
               <p className="text-xs text-white/60 mt-1">
@@ -418,7 +510,7 @@ export default function Home() {
         )}
 
         {/* Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div className={`grid grid-cols-2 md:grid-cols-4 ${showDisasterElements ? "lg:grid-cols-8" : "lg:grid-cols-7"} gap-3`}>
           <MetricCard
             label="Total Properties"
             value={displayStats.total}
@@ -439,13 +531,16 @@ export default function Home() {
             accent="oklch(0.50 0.20 25)"
             sub={`${displayStats.high} High`}
           />
-          <MetricCard
-            label="Disaster-Affected"
-            value={displayStats.disasterAffected}
-            icon={<CloudLightning className="w-5 h-5 text-white" />}
-            accent="oklch(0.55 0.15 240)"
-            sub={`${displayStats.total > 0 ? Math.round((displayStats.disasterAffected / displayStats.total) * 100) : 0}% of total`}
-          />
+          {/* Disaster-Affected tile — NC only */}
+          {showDisasterElements && (
+            <MetricCard
+              label="Disaster-Affected"
+              value={displayStats.disasterAffected}
+              icon={<CloudLightning className="w-5 h-5 text-white" />}
+              accent="oklch(0.55 0.15 240)"
+              sub={`${displayStats.total > 0 ? Math.round((displayStats.disasterAffected / displayStats.total) * 100) : 0}% of total`}
+            />
+          )}
           <MetricCard
             label="Subsidized"
             value={displayStats.subsidized}
@@ -596,37 +691,39 @@ export default function Home() {
           )}
         </div>
 
-        {/* Disaster Context Banner */}
-        <div className="relative rounded-sm overflow-hidden border border-border">
-          <img
-            src={HURRICANE_IMG}
-            alt="Hurricane damage to housing"
-            className="w-full h-32 md:h-40 object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.15_0.02_250)]/90 via-[oklch(0.15_0.02_250)]/70 to-transparent" />
-          <div className="absolute inset-0 flex items-center">
-            <div className="px-6 max-w-xl">
-              <h3 className="font-[Space_Grotesk] text-white font-bold text-base md:text-lg">
-                FEMA Disaster Declarations
-              </h3>
-              <p className="text-white/80 text-xs md:text-sm mt-1 leading-relaxed">
-                NC has been impacted by 4 major hurricanes since 2016. Properties in declared disaster
-                counties receive elevated priority scores — especially those hit by multiple events.
-              </p>
-              <div className="flex gap-4 mt-2 text-xs text-white/70">
-                <span>Helene 2024: 39 counties</span>
-                <span>Florence 2018: 30 counties</span>
-                <span>Matthew 2016: 28 counties</span>
+        {/* Disaster Context Banner — NC only */}
+        {showDisasterElements && (
+          <div className="relative rounded-sm overflow-hidden border border-border">
+            <img
+              src={HURRICANE_IMG}
+              alt="Hurricane damage to housing"
+              className="w-full h-32 md:h-40 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.15_0.02_250)]/90 via-[oklch(0.15_0.02_250)]/70 to-transparent" />
+            <div className="absolute inset-0 flex items-center">
+              <div className="px-6 max-w-xl">
+                <h3 className="font-[Space_Grotesk] text-white font-bold text-base md:text-lg">
+                  FEMA Disaster Declarations (North Carolina)
+                </h3>
+                <p className="text-white/80 text-xs md:text-sm mt-1 leading-relaxed">
+                  NC has been impacted by 4 major hurricanes since 2016. Properties in declared disaster
+                  counties receive elevated priority scores — especially those hit by multiple events.
+                </p>
+                <div className="flex gap-4 mt-2 text-xs text-white/70">
+                  <span>Helene 2024: 39 counties</span>
+                  <span>Florence 2018: 30 counties</span>
+                  <span>Matthew 2016: 28 counties</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Age Vintage Chart — uses displayProperties */}
         <AgeVintageChart properties={displayProperties} />
 
         {/* Scoring Methodology */}
-        <ScoringMethodology />
+        <ScoringMethodology showDisaster={showDisasterElements} />
 
         {/* Charts Toggle */}
         <div className="flex items-center gap-3">
@@ -671,6 +768,7 @@ export default function Home() {
           uniqueElectricUtilities={uniqueElectricUtilities}
           uniqueHeatingTypes={uniqueHeatingTypes}
           resultCount={displayProperties.length}
+          showDisasterFilters={showDisasterElements}
         />
 
         {/* Compare Bar */}
@@ -764,6 +862,7 @@ export default function Home() {
             compareIds={compareIds}
             onToggleCompare={handleToggleCompare}
             highlightId={highlightId}
+            showDisasterColumn={showDisasterElements}
           />
         </div>
 
@@ -800,10 +899,10 @@ export default function Home() {
         <footer className="border-t border-border pt-4 pb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs text-muted-foreground">
             <p>
-              Data sources: HUD Active Portfolio Property Data, HUD LIHTC Database, HUD Multifamily Contracts, DOE LEAD Energy Burden Data. Disaster data: FEMA disaster declarations (DR-4827, DR-4393, DR-4285, DR-4465).
+              Data sources: HUD Active Portfolio Property Data, HUD LIHTC Database, HUD Multifamily Contracts, DOE LEAD Energy Burden Data.{isNCOnly ? " Disaster data: FEMA disaster declarations (DR-4827, DR-4393, DR-4285, DR-4465)." : ""}
             </p>
             <p>
-              Last updated: March 2026
+              Last updated: April 2026
             </p>
           </div>
         </footer>
