@@ -40,8 +40,13 @@
 - [x] Update map to support multi-state view (center, zoom)
 - [x] Update dashboard title/hero for multi-state
 - [x] Run tests and verify expanded dataset (36 tests passing)
-- [ ] Save checkpoint with WI/MI data
+- [x] Save checkpoint with WI/MI data
 - [x] Make disaster/hurricane scoring NC-only (remove from WI/MI scoring)
 - [x] Hide disaster-related metric tiles when non-NC state is selected
 - [x] Hide disaster-related chart elements when non-NC state is selected
 - [x] Hide hurricane-specific columns in table when non-NC state is selected
+- [x] Fetch YR_PIS (Year Placed In Service) from HUD LIHTC Layer 30 for WI/MI
+- [x] Match LIHTC properties by address/name and merge age data
+- [x] Recalculate age_score for properties with new age data
+- [x] Update priority scores and tiers
+- [ ] Save checkpoint with age data backfill
