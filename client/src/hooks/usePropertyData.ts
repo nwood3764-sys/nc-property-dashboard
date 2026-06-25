@@ -212,6 +212,10 @@ export function usePropertyData() {
     return result;
   }, [filters]);
 
+  // NOTE: outreachStatus filter is applied in Home.tsx at the displayProperties level
+  // because it depends on the outreach status map from the useOutreachStatus hook,
+  // which is not available in this pure data hook.
+
   // Apply sorting
   const sortedProperties = useMemo(() => {
     const sorted = [...filteredProperties].sort((a, b) => {

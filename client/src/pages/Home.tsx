@@ -44,6 +44,8 @@ import {
   Layers,
   Globe,
   Plug,
+  Filter,
+  X,
 } from "lucide-react";
 import { useState, useCallback, useMemo, useRef } from "react";
 
@@ -284,68 +286,80 @@ export default function Home() {
     }
   }, []);
 
+  // Outreach status filter — applied here because it depends on getStatus from useOutreachStatus
+  const statusFilteredProperties = useMemo(() => {
+    if (!filters.outreachStatus || filters.outreachStatus === "all") return allFiltered;
+    return allFiltered.filter(p => getStatus(p.property_id) === filters.outreachStatus);
+  }, [allFiltered, filters.outreachStatus, getStatus]);
+
   // ===== CORE: displayProperties is the single source of truth for the entire dashboard =====
   // Priority: nearby > cluster > bounds sync > all filtered
   const displayProperties = useMemo(() => {
     // Nearby mode — show only nearby properties
     if (nearbyMode && nearbyIds.size > 0) {
-      return allFiltered
+      return statusFilteredProperties
         .filter(p => nearbyIds.has(p.property_id))
         .sort((a, b) => (nearbyIds.get(a.property_id) ?? 999) - (nearbyIds.get(b.property_id) ?? 999));
     }
     // Cluster filter — show only properties from clicked cluster
     if (clusterPropertyIds) {
-      return allFiltered.filter(p => clusterPropertyIds.has(p.property_id));
+      return statusFilteredProperties.filter(p => clusterPropertyIds.has(p.property_id));
     }
     // Map bounds sync — show only properties visible in map viewport
     if (mapSyncEnabled && visiblePropertyIds) {
-      return allFiltered.filter(p => visiblePropertyIds.has(p.property_id));
+      return statusFilteredProperties.filter(p => visiblePropertyIds.has(p.property_id));
     }
     // Default — all filtered properties
-    return allFiltered;
-  }, [nearbyMode, nearbyIds, clusterPropertyIds, mapSyncEnabled, visiblePropertyIds, allFiltered]);
+    return statusFilteredProperties;
+  }, [nearbyMode, nearbyIds, clusterPropertyIds, mapSyncEnabled, visiblePropertyIds, statusFilteredProperties]);
 
   // Whether any map-based filter is active
   const isMapFiltered = nearbyMode || !!clusterPropertyIds || (mapSyncEnabled && !!visiblePropertyIds);
 
-  // Recompute stats from displayProperties when map filter is active, otherwise use base stats
-  const displayStats = useMemo(() => {
-    if (!isMapFiltered) return baseStats;
-    return computeStats(displayProperties);
-  }, [isMapFiltered, displayProperties, baseStats]);
+  // Whether any filter (map or status) requires recomputing stats/charts from displayProperties
+  const needsRecompute = isMapFiltered || (filters.outreachStatus && filters.outreachStatus !== "all");
 
-  // Recompute chart breakdowns from displayProperties when map filter is active
+  // Recompute stats from displayProperties when map or status filter is active, otherwise use base stats
+  const displayStats = useMemo(() => {
+    if (!needsRecompute) return baseStats;
+    return computeStats(displayProperties);
+  }, [needsRecompute, displayProperties, baseStats]);
+
+  // Recompute chart breakdowns from displayProperties when map or status filter is active
   const displayCountyBreakdown = useMemo(() => {
-    if (!isMapFiltered) return baseCountyBreakdown;
+    if (!needsRecompute) return baseCountyBreakdown;
     return computeCountyBreakdown(displayProperties);
-  }, [isMapFiltered, displayProperties, baseCountyBreakdown]);
+  }, [needsRecompute, displayProperties, baseCountyBreakdown]);
 
   const displayBuildingTypeBreakdown = useMemo(() => {
-    if (!isMapFiltered) return baseBuildingTypeBreakdown;
+    if (!needsRecompute) return baseBuildingTypeBreakdown;
     return computeBuildingTypeBreakdown(displayProperties);
-  }, [isMapFiltered, displayProperties, baseBuildingTypeBreakdown]);
+  }, [needsRecompute, displayProperties, baseBuildingTypeBreakdown]);
 
   const displayOrgBreakdown = useMemo(() => {
-    if (!isMapFiltered) return baseOrgBreakdown;
+    if (!needsRecompute) return baseOrgBreakdown;
     return computeOrgBreakdown(displayProperties);
-  }, [isMapFiltered, displayProperties, baseOrgBreakdown]);
+  }, [needsRecompute, displayProperties, baseOrgBreakdown]);
 
   // Outreach counts scoped to display properties
   const outreachCounts = useMemo(() => {
-    if (!isMapFiltered) return getCounts();
-    const counts = { contacted: 0, inProgress: 0, complete: 0, total: 0 };
+    const isStatusFiltered = filters.outreachStatus && filters.outreachStatus !== "all";
+    if (!isMapFiltered && !isStatusFiltered) return getCounts();
+    const counts = { target: 0, contacted: 0, inProgress: 0, complete: 0, total: 0 };
     displayProperties.forEach(p => {
       const status = getStatus(p.property_id);
-      if (status === "contacted") { counts.contacted++; counts.total++; }
+      if (status === "target") { counts.target++; counts.total++; }
+      else if (status === "contacted") { counts.contacted++; counts.total++; }
       else if (status === "in_progress") { counts.inProgress++; counts.total++; }
       else if (status === "complete") { counts.complete++; counts.total++; }
     });
     return counts;
-  }, [isMapFiltered, displayProperties, getStatus, getCounts]);
+  }, [isMapFiltered, displayProperties, getStatus, getCounts, filters.outreachStatus]);
 
-  // Table properties — when map filtered, show all display properties (no pagination)
-  // When not map filtered, use normal paginated properties
-  const tableProperties = isMapFiltered ? displayProperties : properties;
+  // Table properties — when map/status filtered, show all display properties (no pagination)
+  // When not filtered, use normal paginated properties
+  const isStatusFiltered = filters.outreachStatus && filters.outreachStatus !== "all";
+  const tableProperties = (isMapFiltered || isStatusFiltered) ? displayProperties : properties;
 
   const handlePropertyClickFromMap = useCallback((propertyId: number) => {
     setHighlightId(propertyId);
@@ -629,10 +643,12 @@ export default function Home() {
               {outreachCounts.complete + outreachCounts.contacted + outreachCounts.inProgress} of {displayStats.total.toLocaleString()} touched
             </span>
           </div>
-          {showProgress && (
+          {(showProgress || isStatusFiltered) && (
             <OutreachProgressDashboard
-              properties={displayProperties}
+              properties={statusFilteredProperties}
               getOutreachStatus={getStatus}
+              onStatusSelect={(status) => updateFilter("outreachStatus", status)}
+              activeStatusFilter={filters.outreachStatus}
             />
           )}
         </div>
@@ -815,6 +831,26 @@ export default function Home() {
           onBulkUpdate={handleBulkUpdate}
           totalFiltered={displayProperties.length}
         />
+
+        {/* Status Filter Banner */}
+        {filters.outreachStatus && filters.outreachStatus !== "all" && (
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-[oklch(0.96_0.02_280)] border border-[oklch(0.85_0.05_280)] rounded-sm">
+            <Filter className="w-4 h-4 text-[oklch(0.40_0.10_280)]" />
+            <span className="text-sm font-medium text-[oklch(0.25_0.08_280)]">
+              Filtered to: <span className="font-bold capitalize">{filters.outreachStatus === "in_progress" ? "In Progress" : filters.outreachStatus === "none" ? "Not Started" : filters.outreachStatus}</span>
+            </span>
+            <span className="text-xs text-[oklch(0.45_0.06_280)]">
+              {displayProperties.length} {displayProperties.length === 1 ? 'property' : 'properties'}
+            </span>
+            <button
+              onClick={() => updateFilter("outreachStatus", "all")}
+              className="ml-auto flex items-center gap-1 text-xs font-medium text-[oklch(0.40_0.08_280)] hover:text-[oklch(0.30_0.10_280)] transition-colors"
+            >
+              <X className="w-3 h-3" />
+              Clear status filter
+            </button>
+          </div>
+        )}
 
         {/* Map Filter Context Banners */}
         {nearbyMode && displayProperties.length > 0 && (

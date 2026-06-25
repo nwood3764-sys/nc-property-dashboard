@@ -11,6 +11,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 interface OutreachProgressDashboardProps {
   properties: Property[];
   getOutreachStatus: (id: number) => OutreachStatus;
+  onStatusSelect?: (status: string) => void;
+  activeStatusFilter?: string;
 }
 
 interface ProgressEntry {
@@ -101,7 +103,7 @@ function ProgressTable({ data, label }: { data: ProgressEntry[]; label: string }
   );
 }
 
-export default function OutreachProgressDashboard({ properties, getOutreachStatus }: OutreachProgressDashboardProps) {
+export default function OutreachProgressDashboard({ properties, getOutreachStatus, onStatusSelect, activeStatusFilter }: OutreachProgressDashboardProps) {
   // Overall stats
   const overallStats = useMemo(() => {
     let target = 0, contacted = 0, inProgress = 0, complete = 0, notStarted = 0;
@@ -190,32 +192,74 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
       </div>
 
       <div className="p-5 space-y-6">
-        {/* Overall Summary Row */}
+        {/* Overall Summary Row — clickable cards filter the dashboard */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-muted/30 rounded-sm p-3 text-center">
+          <button
+            onClick={() => onStatusSelect?.(activeStatusFilter === "all" ? "all" : "all")}
+            className={`rounded-sm p-3 text-center transition-all cursor-pointer border-2 ${
+              !activeStatusFilter || activeStatusFilter === "all"
+                ? "bg-muted/30 border-transparent"
+                : "bg-muted/10 border-transparent opacity-50 hover:opacity-80"
+            }`}
+          >
             <p className="text-2xl font-bold font-[Space_Grotesk] text-foreground tabular-nums">{overallStats.total.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Total Properties</p>
-          </div>
-          <div className="bg-[oklch(0.95_0.04_155)] rounded-sm p-3 text-center">
+          </button>
+          <button
+            onClick={() => onStatusSelect?.(activeStatusFilter === "complete" ? "all" : "complete")}
+            className={`rounded-sm p-3 text-center transition-all cursor-pointer border-2 ${
+              activeStatusFilter === "complete"
+                ? "bg-[oklch(0.95_0.04_155)] border-[oklch(0.45_0.15_155)] ring-2 ring-[oklch(0.45_0.15_155)]/20"
+                : "bg-[oklch(0.95_0.04_155)] border-transparent hover:border-[oklch(0.70_0.10_155)]"
+            }`}
+          >
             <p className="text-2xl font-bold font-[Space_Grotesk] text-[oklch(0.35_0.12_155)] tabular-nums">{overallStats.complete}</p>
             <p className="text-xs text-[oklch(0.40_0.10_155)] mt-0.5">Complete</p>
-          </div>
-          <div className="bg-[oklch(0.93_0.04_240)] rounded-sm p-3 text-center">
+          </button>
+          <button
+            onClick={() => onStatusSelect?.(activeStatusFilter === "in_progress" ? "all" : "in_progress")}
+            className={`rounded-sm p-3 text-center transition-all cursor-pointer border-2 ${
+              activeStatusFilter === "in_progress"
+                ? "bg-[oklch(0.93_0.04_240)] border-[oklch(0.55_0.15_240)] ring-2 ring-[oklch(0.55_0.15_240)]/20"
+                : "bg-[oklch(0.93_0.04_240)] border-transparent hover:border-[oklch(0.70_0.10_240)]"
+            }`}
+          >
             <p className="text-2xl font-bold font-[Space_Grotesk] text-[oklch(0.40_0.12_240)] tabular-nums">{overallStats.inProgress}</p>
             <p className="text-xs text-[oklch(0.45_0.10_240)] mt-0.5">In Progress</p>
-          </div>
-          <div className="bg-[oklch(0.95_0.04_60)] rounded-sm p-3 text-center">
+          </button>
+          <button
+            onClick={() => onStatusSelect?.(activeStatusFilter === "contacted" ? "all" : "contacted")}
+            className={`rounded-sm p-3 text-center transition-all cursor-pointer border-2 ${
+              activeStatusFilter === "contacted"
+                ? "bg-[oklch(0.95_0.04_60)] border-[oklch(0.60_0.17_60)] ring-2 ring-[oklch(0.60_0.17_60)]/20"
+                : "bg-[oklch(0.95_0.04_60)] border-transparent hover:border-[oklch(0.75_0.12_60)]"
+            }`}
+          >
             <p className="text-2xl font-bold font-[Space_Grotesk] text-[oklch(0.40_0.14_60)] tabular-nums">{overallStats.contacted}</p>
             <p className="text-xs text-[oklch(0.45_0.12_60)] mt-0.5">Contacted</p>
-          </div>
-          <div className="bg-[oklch(0.95_0.06_330)] rounded-sm p-3 text-center">
+          </button>
+          <button
+            onClick={() => onStatusSelect?.(activeStatusFilter === "target" ? "all" : "target")}
+            className={`rounded-sm p-3 text-center transition-all cursor-pointer border-2 ${
+              activeStatusFilter === "target"
+                ? "bg-[oklch(0.95_0.06_330)] border-[oklch(0.55_0.20_330)] ring-2 ring-[oklch(0.55_0.20_330)]/20"
+                : "bg-[oklch(0.95_0.06_330)] border-transparent hover:border-[oklch(0.70_0.15_330)]"
+            }`}
+          >
             <p className="text-2xl font-bold font-[Space_Grotesk] text-[oklch(0.35_0.15_330)] tabular-nums">{overallStats.target}</p>
             <p className="text-xs text-[oklch(0.40_0.12_330)] mt-0.5">Target</p>
-          </div>
-          <div className="bg-muted/30 rounded-sm p-3 text-center">
+          </button>
+          <button
+            onClick={() => onStatusSelect?.(activeStatusFilter === "none" ? "all" : "none")}
+            className={`rounded-sm p-3 text-center transition-all cursor-pointer border-2 ${
+              activeStatusFilter === "none"
+                ? "bg-muted/30 border-muted-foreground ring-2 ring-muted-foreground/20"
+                : "bg-muted/30 border-transparent hover:border-muted-foreground/40"
+            }`}
+          >
             <p className="text-2xl font-bold font-[Space_Grotesk] text-muted-foreground tabular-nums">{overallStats.notStarted.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Not Started</p>
-          </div>
+          </button>
         </div>
 
         {/* Overall progress bar */}
