@@ -7,6 +7,8 @@ import { useMemo } from "react";
 import type { Property } from "@/lib/types";
 import type { OutreachStatus } from "@/hooks/useOutreachStatus";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { Link } from "wouter";
+import { ExternalLink } from "lucide-react";
 
 interface OutreachProgressDashboardProps {
   properties: Property[];
@@ -182,13 +184,19 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-border bg-muted/30">
-        <h3 className="font-[Space_Grotesk] text-base font-bold text-foreground">
-          Outreach Progress Dashboard
-        </h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Track outreach completion rates across counties and organizations
-        </p>
+      <div className="px-5 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
+        <div>
+          <h3 className="font-[Space_Grotesk] text-base font-bold text-foreground">
+            Outreach Progress Dashboard
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Track outreach completion rates across counties and organizations
+          </p>
+        </div>
+        <Link href="/outreach-report" className="flex items-center gap-1.5 text-xs font-medium text-[oklch(0.40_0.08_250)] hover:text-[oklch(0.30_0.10_250)] transition-colors">
+          <ExternalLink className="w-3.5 h-3.5" />
+          Full Report
+        </Link>
       </div>
 
       <div className="p-5 space-y-6">

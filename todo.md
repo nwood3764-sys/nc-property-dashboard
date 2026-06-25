@@ -63,6 +63,6 @@
 - [x] Make Outreach Progress Dashboard status cards clickable to filter the main dashboard
 - [x] Clicking a status card (Target, Contacted, In Progress, Complete, Not Started) filters map/table/charts to only those properties
 - [x] Add a clear filter button when status filter is active from card click
-- [ ] Create a dedicated Outreach Status Report page with full status breakdown by county/org
-- [ ] Add export button on the status report page to export filtered-by-status properties as CSV
+- [x] Create a dedicated Outreach Status Report page with full status breakdown by county/org
+- [x] Add export button on the status report page to export filtered-by-status properties as CSV
 - [x] Ensure the existing Export CSV button respects the active outreach status filter (it already exports displayProperties which is now status-filtered)
