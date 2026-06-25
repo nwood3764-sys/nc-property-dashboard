@@ -15,6 +15,13 @@
       "when": 1775054631362,
       "tag": "0001_wealthy_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1782428359363,
+      "tag": "0002_perfect_franklin_richards",
+      "breakpoints": true
     }
   ]
 }

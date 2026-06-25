@@ -7,7 +7,7 @@
 import { useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 
-export type OutreachStatus = "none" | "contacted" | "in_progress" | "complete";
+export type OutreachStatus = "none" | "target" | "contacted" | "in_progress" | "complete";
 
 export function useOutreachStatus() {
   const utils = trpc.useUtils();
@@ -85,6 +85,7 @@ export function useOutreachStatus() {
   const getCounts = useCallback(() => {
     const values = Object.values(statusMap);
     return {
+      target: values.filter((s) => s === "target").length,
       contacted: values.filter((s) => s === "contacted").length,
       inProgress: values.filter((s) => s === "in_progress").length,
       complete: values.filter((s) => s === "complete").length,

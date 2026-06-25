@@ -59,3 +59,4 @@
 - [x] Add Section 9 / EPC flags to property table
 - [x] Add Section 9 columns to CSV export
 - [x] All tests passing (36/36)
+- [x] Add "Target" status option to the "Mark as..." dropdown (before Contacted in workflow)

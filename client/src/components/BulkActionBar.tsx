@@ -19,6 +19,7 @@ interface BulkActionBarProps {
 }
 
 const statusOptions: { value: OutreachStatus; label: string; color: string }[] = [
+  { value: "target", label: "Target", color: "oklch(0.55 0.20 330)" },
   { value: "contacted", label: "Contacted", color: "oklch(0.60 0.17 60)" },
   { value: "in_progress", label: "In Progress", color: "oklch(0.55 0.15 240)" },
   { value: "complete", label: "Complete", color: "oklch(0.45 0.15 155)" },

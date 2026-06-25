@@ -26,7 +26,7 @@ export type InsertUser = typeof users.$inferInsert;
 export const outreachStatuses = mysqlTable("outreach_statuses", {
   id: int("id").autoincrement().primaryKey(),
   propertyId: int("propertyId").notNull().unique(),
-  status: mysqlEnum("status", ["none", "contacted", "in_progress", "complete"]).notNull().default("none"),
+  status: mysqlEnum("status", ["none", "target", "contacted", "in_progress", "complete"]).notNull().default("none"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 

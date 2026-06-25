@@ -45,7 +45,7 @@ export const appRouter = router({
       .input(
         z.object({
           propertyId: z.number(),
-          status: z.enum(["none", "contacted", "in_progress", "complete"]),
+          status: z.enum(["none", "target", "contacted", "in_progress", "complete"]),
         })
       )
       .mutation(async ({ input }) => {
@@ -58,7 +58,7 @@ export const appRouter = router({
       .input(
         z.object({
           propertyIds: z.array(z.number()),
-          status: z.enum(["none", "contacted", "in_progress", "complete"]),
+          status: z.enum(["none", "target", "contacted", "in_progress", "complete"]),
         })
       )
       .mutation(async ({ input }) => {

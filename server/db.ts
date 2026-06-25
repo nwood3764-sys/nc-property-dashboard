@@ -101,7 +101,7 @@ export async function getAllOutreachStatuses() {
 
 export async function upsertOutreachStatus(
   propertyId: number,
-  status: "none" | "contacted" | "in_progress" | "complete"
+  status: "none" | "target" | "contacted" | "in_progress" | "complete"
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -126,7 +126,7 @@ export async function upsertOutreachStatus(
 
 export async function bulkUpsertOutreachStatus(
   propertyIds: number[],
-  status: "none" | "contacted" | "in_progress" | "complete"
+  status: "none" | "target" | "contacted" | "in_progress" | "complete"
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

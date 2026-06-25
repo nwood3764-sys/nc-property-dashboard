@@ -16,6 +16,7 @@ interface OutreachProgressDashboardProps {
 interface ProgressEntry {
   name: string;
   total: number;
+  target: number;
   contacted: number;
   inProgress: number;
   complete: number;
@@ -28,6 +29,7 @@ function ProgressBar({ entry }: { entry: ProgressEntry }) {
   const completePct = (entry.complete / total) * 100;
   const inProgressPct = (entry.inProgress / total) * 100;
   const contactedPct = (entry.contacted / total) * 100;
+  const targetPct = (entry.target / total) * 100;
 
   return (
     <div className="flex items-center gap-3">
@@ -52,6 +54,13 @@ function ProgressBar({ entry }: { entry: ProgressEntry }) {
               className="h-full"
               style={{ width: `${contactedPct}%`, backgroundColor: "oklch(0.60 0.17 60)" }}
               title={`Contacted: ${entry.contacted}`}
+            />
+          )}
+          {targetPct > 0 && (
+            <div
+              className="h-full"
+              style={{ width: `${targetPct}%`, backgroundColor: "oklch(0.55 0.20 330)" }}
+              title={`Target: ${entry.target}`}
             />
           )}
         </div>
@@ -95,29 +104,31 @@ function ProgressTable({ data, label }: { data: ProgressEntry[]; label: string }
 export default function OutreachProgressDashboard({ properties, getOutreachStatus }: OutreachProgressDashboardProps) {
   // Overall stats
   const overallStats = useMemo(() => {
-    let contacted = 0, inProgress = 0, complete = 0, notStarted = 0;
+    let target = 0, contacted = 0, inProgress = 0, complete = 0, notStarted = 0;
     properties.forEach((p) => {
       const s = getOutreachStatus(p.property_id);
-      if (s === "contacted") contacted++;
+      if (s === "target") target++;
+      else if (s === "contacted") contacted++;
       else if (s === "in_progress") inProgress++;
       else if (s === "complete") complete++;
       else notStarted++;
     });
     const total = properties.length;
-    const touched = contacted + inProgress + complete;
-    return { total, contacted, inProgress, complete, notStarted, touched, touchedPct: total > 0 ? Math.round((touched / total) * 100) : 0, completePct: total > 0 ? Math.round((complete / total) * 100) : 0 };
+    const touched = target + contacted + inProgress + complete;
+    return { total, target, contacted, inProgress, complete, notStarted, touched, touchedPct: total > 0 ? Math.round((touched / total) * 100) : 0, completePct: total > 0 ? Math.round((complete / total) * 100) : 0 };
   }, [properties, getOutreachStatus]);
 
   // By county
   const countyProgress = useMemo(() => {
-    const map = new Map<string, { total: number; contacted: number; inProgress: number; complete: number; notStarted: number }>();
+    const map = new Map<string, { total: number; target: number; contacted: number; inProgress: number; complete: number; notStarted: number }>();
     properties.forEach((p) => {
       const county = p.county_clean || "Unknown";
-      if (!map.has(county)) map.set(county, { total: 0, contacted: 0, inProgress: 0, complete: 0, notStarted: 0 });
+      if (!map.has(county)) map.set(county, { total: 0, target: 0, contacted: 0, inProgress: 0, complete: 0, notStarted: 0 });
       const entry = map.get(county)!;
       entry.total++;
       const s = getOutreachStatus(p.property_id);
-      if (s === "contacted") entry.contacted++;
+      if (s === "target") entry.target++;
+      else if (s === "contacted") entry.contacted++;
       else if (s === "in_progress") entry.inProgress++;
       else if (s === "complete") entry.complete++;
       else entry.notStarted++;
@@ -126,7 +137,7 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
       .map(([name, data]) => ({
         name,
         ...data,
-        completionPct: data.total > 0 ? ((data.complete + data.inProgress + data.contacted) / data.total) * 100 : 0,
+        completionPct: data.total > 0 ? ((data.complete + data.inProgress + data.contacted + data.target) / data.total) * 100 : 0,
       }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 20);
@@ -134,15 +145,16 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
 
   // By organization
   const orgProgress = useMemo(() => {
-    const map = new Map<string, { total: number; contacted: number; inProgress: number; complete: number; notStarted: number }>();
+    const map = new Map<string, { total: number; target: number; contacted: number; inProgress: number; complete: number; notStarted: number }>();
     properties.forEach((p) => {
       const org = (p.organization || "").trim();
       if (!org) return;
-      if (!map.has(org)) map.set(org, { total: 0, contacted: 0, inProgress: 0, complete: 0, notStarted: 0 });
+      if (!map.has(org)) map.set(org, { total: 0, target: 0, contacted: 0, inProgress: 0, complete: 0, notStarted: 0 });
       const entry = map.get(org)!;
       entry.total++;
       const s = getOutreachStatus(p.property_id);
-      if (s === "contacted") entry.contacted++;
+      if (s === "target") entry.target++;
+      else if (s === "contacted") entry.contacted++;
       else if (s === "in_progress") entry.inProgress++;
       else if (s === "complete") entry.complete++;
       else entry.notStarted++;
@@ -151,7 +163,7 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
       .map(([name, data]) => ({
         name,
         ...data,
-        completionPct: data.total > 0 ? ((data.complete + data.inProgress + data.contacted) / data.total) * 100 : 0,
+        completionPct: data.total > 0 ? ((data.complete + data.inProgress + data.contacted + data.target) / data.total) * 100 : 0,
       }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 20);
@@ -162,6 +174,7 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
     { name: "Complete", value: overallStats.complete, color: "oklch(0.45 0.15 155)" },
     { name: "In Progress", value: overallStats.inProgress, color: "oklch(0.55 0.15 240)" },
     { name: "Contacted", value: overallStats.contacted, color: "oklch(0.60 0.17 60)" },
+    { name: "Target", value: overallStats.target, color: "oklch(0.55 0.20 330)" },
     { name: "Not Started", value: overallStats.notStarted, color: "oklch(0.85 0.01 250)" },
   ], [overallStats]);
 
@@ -178,7 +191,7 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
 
       <div className="p-5 space-y-6">
         {/* Overall Summary Row */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-muted/30 rounded-sm p-3 text-center">
             <p className="text-2xl font-bold font-[Space_Grotesk] text-foreground tabular-nums">{overallStats.total.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Total Properties</p>
@@ -194,6 +207,10 @@ export default function OutreachProgressDashboard({ properties, getOutreachStatu
           <div className="bg-[oklch(0.95_0.04_60)] rounded-sm p-3 text-center">
             <p className="text-2xl font-bold font-[Space_Grotesk] text-[oklch(0.40_0.14_60)] tabular-nums">{overallStats.contacted}</p>
             <p className="text-xs text-[oklch(0.45_0.12_60)] mt-0.5">Contacted</p>
+          </div>
+          <div className="bg-[oklch(0.95_0.06_330)] rounded-sm p-3 text-center">
+            <p className="text-2xl font-bold font-[Space_Grotesk] text-[oklch(0.35_0.15_330)] tabular-nums">{overallStats.target}</p>
+            <p className="text-xs text-[oklch(0.40_0.12_330)] mt-0.5">Target</p>
           </div>
           <div className="bg-muted/30 rounded-sm p-3 text-center">
             <p className="text-2xl font-bold font-[Space_Grotesk] text-muted-foreground tabular-nums">{overallStats.notStarted.toLocaleString()}</p>

@@ -34,6 +34,7 @@ interface OrgPdfExportProps {
 
 const statusLabels: Record<OutreachStatus, string> = {
   none: "Not Started",
+  target: "Target",
   contacted: "Contacted",
   in_progress: "In Progress",
   complete: "Complete",

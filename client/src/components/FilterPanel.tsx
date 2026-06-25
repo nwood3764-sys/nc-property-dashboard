@@ -344,6 +344,7 @@ export default function FilterPanel({
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="none">Not Started</SelectItem>
+                  <SelectItem value="target">Target</SelectItem>
                   <SelectItem value="contacted">Contacted</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="complete">Complete</SelectItem>

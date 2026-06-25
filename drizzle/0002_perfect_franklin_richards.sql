@@ -1,0 +1,1 @@
+ALTER TABLE `outreach_statuses` MODIFY COLUMN `status` enum('none','target','contacted','in_progress','complete') NOT NULL DEFAULT 'none';

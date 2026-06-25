@@ -24,6 +24,12 @@ const statusConfig: Record<OutreachStatus, { label: string; bg: string; text: st
     text: "text-muted-foreground",
     dot: "bg-gray-400",
   },
+  target: {
+    label: "Target",
+    bg: "bg-[oklch(0.92_0.08_330)]",
+    text: "text-[oklch(0.30_0.12_330)]",
+    dot: "bg-[oklch(0.55_0.20_330)]",
+  },
   contacted: {
     label: "Contacted",
     bg: "bg-[oklch(0.92_0.06_70)]",
@@ -64,6 +70,12 @@ export default function OutreachBadge({ status, onChange }: OutreachBadgeProps) 
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gray-400" />
               Not Started
+            </span>
+          </SelectItem>
+          <SelectItem value="target">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[oklch(0.55_0.20_330)]" />
+              Target
             </span>
           </SelectItem>
           <SelectItem value="contacted">
