@@ -98,7 +98,9 @@ export default function FilterPanel({
     filters.highEnergyBurden ||
     filters.electricUtilities.size > 0 ||
     filters.heatingTypes.size > 0 ||
-    filters.hasGasService !== "all";
+    filters.hasGasService !== "all" ||
+    filters.section9Only ||
+    filters.epcEligibleOnly;
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm">
@@ -487,6 +489,20 @@ export default function FilterPanel({
                   Coastal Flood Zone
                 </label>
               )}
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={filters.section9Only}
+                  onCheckedChange={(v) => updateFilter("section9Only", !!v)}
+                />
+                Section 9 Public Housing
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={filters.epcEligibleOnly}
+                  onCheckedChange={(v) => updateFilter("epcEligibleOnly", !!v)}
+                />
+                EPC Eligible Only
+              </label>
             </div>
           </div>
         </div>

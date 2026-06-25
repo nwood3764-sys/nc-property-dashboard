@@ -43,6 +43,7 @@ import {
   Navigation,
   Layers,
   Globe,
+  Plug,
 } from "lucide-react";
 import { useState, useCallback, useMemo, useRef } from "react";
 
@@ -88,6 +89,9 @@ function computeStats(fp: any[]) {
       const mid = Math.floor(ages.length / 2);
       return ages.length % 2 !== 0 ? ages[mid] : Math.round((ages[mid - 1] + ages[mid]) / 2);
     })(),
+    section9Count: fp.filter((p: any) => p.is_section9).length,
+    epcEligibleCount: fp.filter((p: any) => p.is_epc_eligible).length,
+    section9Units: fp.filter((p: any) => p.is_section9).reduce((s: number, p: any) => s + (p.total_unit_count || 0), 0),
   };
 }
 
@@ -572,7 +576,7 @@ export default function Home() {
         </div>
 
         {/* Second row: Contract & Energy metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <MetricCard
             label="With Contract Data"
             value={displayStats.withContract}
@@ -600,6 +604,13 @@ export default function Home() {
             icon={<Calendar className="w-5 h-5 text-[oklch(0.30_0.06_250)]" />}
             accent="oklch(0.94 0.01 250)"
             sub={`Median ${displayStats.medianAge}yr`}
+          />
+          <MetricCard
+            label="Section 9 / EPC"
+            value={displayStats.section9Count}
+            icon={<Plug className="w-5 h-5 text-white" />}
+            accent="oklch(0.45 0.18 180)"
+            sub={`${displayStats.epcEligibleCount} EPC-eligible / ${displayStats.section9Units.toLocaleString()} units`}
           />
         </div>
 

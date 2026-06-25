@@ -525,6 +525,16 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                           <BadgeDollarSign className="w-3 h-3 text-[oklch(0.35_0.12_140)]" />
                         </span>
                       )}
+                      {p.is_section9 && (
+                        <span title="Section 9 Public Housing" className="w-5 h-5 rounded-sm bg-[oklch(0.88_0.06_180)] flex items-center justify-center">
+                          <Building className="w-3 h-3 text-[oklch(0.35_0.15_180)]" />
+                        </span>
+                      )}
+                      {p.is_epc_eligible && (
+                        <span title="EPC Eligible" className="w-5 h-5 rounded-sm bg-[oklch(0.88_0.08_130)] flex items-center justify-center">
+                          <Plug className="w-3 h-3 text-[oklch(0.35_0.12_130)]" />
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-3 py-3">

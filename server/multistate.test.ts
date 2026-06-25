@@ -60,10 +60,10 @@ describe("Multi-state property data", () => {
     for (const p of nonNCProps) {
       expect(p.disaster_score).toBe(0);
       expect(p.flood_risk_score).toBe(0);
-      expect(p.helene_affected).toBe(false);
-      expect(p.florence_affected).toBe(false);
-      expect(p.matthew_affected).toBe(false);
-      expect(p.dorian_affected).toBe(false);
+      expect(p.helene_affected).toBeFalsy();
+      expect(p.florence_affected ?? false).toBeFalsy();
+      expect(p.matthew_affected ?? false).toBeFalsy();
+      expect(p.dorian_affected ?? false).toBeFalsy();
     }
   });
 

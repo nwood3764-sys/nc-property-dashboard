@@ -49,4 +49,13 @@
 - [x] Match LIHTC properties by address/name and merge age data
 - [x] Recalculate age_score for properties with new age data
 - [x] Update priority scores and tiers
-- [ ] Save checkpoint with age data backfill
+- [x] Save checkpoint with age data backfill
+- [x] Write HUD Public Housing API reference guide
+- [x] Fetch Section 9 public housing data for WI, MI, NC from HUD API
+- [x] Process and integrate Section 9 properties into dashboard dataset (453 developments)
+- [x] Tag Section 9 properties with EPC eligibility flag
+- [x] Add Section 9 / EPC filter toggle to dashboard UI
+- [x] Add Section 9 metric tile to dashboard
+- [x] Add Section 9 / EPC flags to property table
+- [x] Add Section 9 columns to CSV export
+- [x] All tests passing (36/36)

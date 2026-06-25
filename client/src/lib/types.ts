@@ -65,6 +65,17 @@ export interface Property {
   gasUtility?: string | null;
   hasGasService?: boolean;
   heatingSystemEstimate?: string | null;
+  // Section 9 Public Housing fields
+  is_section9?: boolean;
+  is_epc_eligible?: boolean;
+  is_rad_converted?: boolean;
+  pha_code?: string | null;
+  pha_name?: string | null;
+  building_count?: number | null;
+  development_code?: string | null;
+  avg_utility_allowance?: number | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
 }
 
 export type SortField =
@@ -108,4 +119,6 @@ export interface Filters {
   electricUtilities: Set<string>;
   heatingTypes: Set<string>;
   hasGasService: string; // "all" | "yes" | "no"
+  section9Only: boolean;
+  epcEligibleOnly: boolean;
 }

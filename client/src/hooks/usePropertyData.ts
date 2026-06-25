@@ -26,6 +26,8 @@ const defaultFilters: Filters = {
   electricUtilities: new Set<string>(),
   heatingTypes: new Set<string>(),
   hasGasService: "all",
+  section9Only: false,
+  epcEligibleOnly: false,
 };
 
 // State display names
@@ -203,6 +205,10 @@ export function usePropertyData() {
     if (filters.hasGasService === "yes") result = result.filter((p) => p.hasGasService);
     else if (filters.hasGasService === "no") result = result.filter((p) => !p.hasGasService);
 
+    // Section 9 / EPC filters
+    if (filters.section9Only) result = result.filter((p) => p.is_section9);
+    if (filters.epcEligibleOnly) result = result.filter((p) => p.is_epc_eligible);
+
     return result;
   }, [filters]);
 
@@ -271,6 +277,9 @@ export function usePropertyData() {
         const mid = Math.floor(ages.length / 2);
         return ages.length % 2 !== 0 ? ages[mid] : Math.round((ages[mid - 1] + ages[mid]) / 2);
       })(),
+      section9Count: fp.filter((p) => p.is_section9).length,
+      epcEligibleCount: fp.filter((p) => p.is_epc_eligible).length,
+      section9Units: fp.filter((p) => p.is_section9).reduce((s, p) => s + (p.total_unit_count || 0), 0),
     };
   }, [filteredProperties]);
 
