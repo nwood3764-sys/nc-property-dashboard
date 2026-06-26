@@ -438,10 +438,9 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                     <TierBadge tier={p.priority_tier} />
                   </td>
                   <td className="px-3 py-3">
-                    <div className="max-w-[280px]">
+                    <div className="max-w-[320px]">
                       <p className="font-medium text-foreground truncate">{p.property_name_clean}</p>
-                      <p className="text-xs text-muted-foreground truncate">{p.address_clean}</p>
-                      <p className="text-xs text-muted-foreground truncate">{p.city_clean}, {p.state || 'NC'} {p.zip_code}</p>
+                      <p className="text-xs text-muted-foreground truncate">{p.address_clean}, {p.city_clean}, {p.state || 'NC'} {p.zip_code}</p>
                     </div>
                   </td>
                   <td className="px-3 py-3 text-sm">{p.county_clean}</td>
