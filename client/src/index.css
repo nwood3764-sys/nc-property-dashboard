@@ -91,6 +91,10 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: "Work Sans", system-ui, sans-serif;
@@ -184,7 +188,13 @@
     .container {
       padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1440px;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    .container {
+      padding-left: 3rem;
+      padding-right: 3rem;
     }
   }
 }

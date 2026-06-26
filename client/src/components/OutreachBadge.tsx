@@ -60,7 +60,7 @@ export default function OutreachBadge({ status, onChange }: OutreachBadgeProps) 
         onValueChange={(val) => onChange(val as OutreachStatus)}
       >
         <SelectTrigger
-          className={`h-7 min-w-[120px] max-w-[140px] text-xs font-semibold border-0 ${config.bg} ${config.text} gap-1.5 px-2 rounded-sm shadow-none focus:ring-1`}
+          className={`h-7 min-w-[100px] max-w-[130px] text-xs font-semibold border-0 ${config.bg} ${config.text} gap-1 px-2 rounded-sm shadow-none focus:ring-1`}
         >
           <span className={`w-2 h-2 rounded-full shrink-0 ${config.dot}`} />
           <SelectValue />

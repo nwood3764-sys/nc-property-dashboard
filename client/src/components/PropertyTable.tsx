@@ -334,8 +334,8 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="w-full">
+        <table className="w-full text-sm table-fixed">
           <thead>
             <tr className="bg-[oklch(0.22_0.06_250)] text-white">
               {hasSelection && (
@@ -343,18 +343,18 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                   <span className="sr-only">Select</span>
                 </th>
               )}
-              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider w-8"></th>
+              <th className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider w-[2%]"></th>
               <th
-                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors w-[6%]"
                 onClick={() => onSort("total_priority_score")}
               >
                 <span className="flex items-center gap-1">
                   Score <SortIcon field="total_priority_score" currentField={sortField} direction={sortDirection} />
                 </span>
               </th>
-              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Tier</th>
+              <th className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider w-[5%]">Tier</th>
               <th
-                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors w-[16%]"
                 onClick={() => onSort("property_name_clean")}
               >
                 <span className="flex items-center gap-1">
@@ -362,7 +362,7 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                 </span>
               </th>
               <th
-                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors w-[7%]"
                 onClick={() => onSort("county_clean")}
               >
                 <span className="flex items-center gap-1">
@@ -370,34 +370,34 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                 </span>
               </th>
               <th
-                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors w-[7%]"
                 onClick={() => onSort("total_unit_count")}
               >
                 <span className="flex items-center gap-1">
                   Units <SortIcon field="total_unit_count" currentField={sortField} direction={sortDirection} />
                 </span>
               </th>
-              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Type</th>
+              <th className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider w-[11%]">Type</th>
               <th
-                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors w-[4%]"
                 onClick={() => onSort("property_age_years")}
               >
                 <span className="flex items-center gap-1">
                   Age <SortIcon field="property_age_years" currentField={sortField} direction={sortDirection} />
                 </span>
               </th>
-              {showDisasterColumn && <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Disasters</th>}
-              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Structure</th>
+              {showDisasterColumn && <th className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider w-[9%]">Disasters</th>}
+              <th className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider w-[5%]">Structure</th>
               <th
-                className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors"
+                className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 transition-colors w-[12%]"
                 onClick={() => onSort("organization")}
               >
                 <span className="flex items-center gap-1">
                   Org <SortIcon field="organization" currentField={sortField} direction={sortDirection} />
                 </span>
               </th>
-              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Flags</th>
-              <th className="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider">Status</th>
+              <th className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider w-[8%]">Flags</th>
+              <th className="text-left px-2 py-3 font-semibold text-xs uppercase tracking-wider w-[8%]">Status</th>
               {compareIds !== undefined && (
                 <th className="text-center px-2 py-3 font-semibold text-xs uppercase tracking-wider w-10">
                   <GitCompare className="w-3.5 h-3.5 mx-auto" />
@@ -431,45 +431,45 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                       <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     )}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-3">
                     <ScoreBar score={p.total_priority_score} tier={p.priority_tier} />
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-3">
                     <TierBadge tier={p.priority_tier} />
                   </td>
-                  <td className="px-3 py-3">
-                    <div className="max-w-[320px]">
+                  <td className="px-2 py-3 overflow-hidden">
+                    <div className="min-w-0">
                       <p className="font-medium text-foreground truncate">{p.property_name_clean}</p>
                       <p className="text-xs text-muted-foreground truncate">{p.address_clean}, {p.city_clean}, {p.state || 'NC'} {p.zip_code}</p>
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-sm">{p.county_clean}</td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-3 text-sm truncate">{p.county_clean}</td>
+                  <td className="px-2 py-3">
                     <div className="text-sm tabular-nums">
                       <span className="font-semibold">{p.total_unit_count}</span>
                       {p.total_assisted_unit_count > 0 && (
                         <span className="text-xs text-muted-foreground ml-1">
-                          ({p.total_assisted_unit_count} assisted)
+                          ({p.total_assisted_unit_count})
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-3">
-                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-sm bg-muted text-foreground whitespace-nowrap">
-                      <span>{buildingTypeIcons[p.building_type] || "\u{1F3E2}"}</span>
-                      {p.building_type}
+                  <td className="px-2 py-3 overflow-hidden">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-sm bg-muted text-foreground truncate max-w-full">
+                      <span className="shrink-0">{buildingTypeIcons[p.building_type] || "\u{1F3E2}"}</span>
+                      <span className="truncate">{p.building_type}</span>
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-sm tabular-nums">
+                  <td className="px-2 py-3 text-sm tabular-nums">
                     {p.property_age_years != null ? `${p.property_age_years}yr` : "\u2014"}
                   </td>
                   {showDisasterColumn && (
-                    <td className="px-3 py-3">
+                    <td className="px-2 py-3 overflow-hidden">
                       <DisasterBadges property={p} />
                     </td>
                   )}
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
+                  <td className="px-2 py-3">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-0.5" title="Estimated stories">
                         <Layers className="w-3 h-3" />
                         {p.est_stories}F
@@ -480,15 +480,15 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                       </span>
                     </div>
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-3 overflow-hidden">
                     {p.organization ? (
-                      <div className="max-w-[160px]">
+                      <div className="min-w-0">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setLocation(`/org/${encodeURIComponent(p.organization!)}`);
                           }}
-                          className="text-xs font-medium text-[oklch(0.40_0.06_250)] hover:text-[oklch(0.30_0.06_250)] hover:underline truncate block max-w-full text-left transition-colors"
+                          className="text-xs font-medium text-[oklch(0.40_0.06_250)] hover:text-[oklch(0.30_0.06_250)] hover:underline truncate block w-full text-left transition-colors"
                           title={`View all properties for ${p.organization}`}
                         >
                           {p.organization}
@@ -498,8 +498,8 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                       <span className="text-xs text-muted-foreground">{"\u2014"}</span>
                     )}
                   </td>
-                  <td className="px-3 py-3">
-                    <div className="flex gap-1.5">
+                  <td className="px-2 py-3">
+                    <div className="flex flex-wrap gap-1">
                       {p.is_subsidized_ind && (
                         <span title="Subsidized" className="w-5 h-5 rounded-sm bg-[oklch(0.94_0.01_250)] flex items-center justify-center">
                           <HomeIcon className="w-3 h-3 text-[oklch(0.40_0.06_250)]" />
@@ -537,7 +537,7 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-3">
                     <OutreachBadge
                       status={getOutreachStatus(p.property_id)}
                       onChange={(s) => setOutreachStatus(p.property_id, s)}

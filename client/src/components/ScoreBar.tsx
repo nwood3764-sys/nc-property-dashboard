@@ -14,9 +14,9 @@ const tierColors: Record<string, string> = {
 export default function ScoreBar({ score, max = 100, tier }: ScoreBarProps) {
   const pct = Math.min((score / max) * 100, 100);
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-semibold w-6 text-right tabular-nums">{score}</span>
-      <div className="score-bar flex-1 w-16">
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs font-semibold w-5 text-right tabular-nums">{score}</span>
+      <div className="score-bar flex-1 min-w-[2rem]">
         <div
           className="score-fill"
           style={{
