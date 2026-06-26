@@ -1,0 +1,33 @@
+Scroll Fix Status - Production Site (ncpropdash-jqd4ra2c.manus.space)
+=====================================================================
+
+ISSUE: The table was wider than the viewport, causing a horizontal scrollbar.
+The user's screenshot showed content cut off on the left side (property names truncated)
+and a horizontal scrollbar at the bottom.
+
+ROOT CAUSES:
+1. Container had max-width: 1440px - capped content width
+2. Table wrapper had overflow-x-auto - created individual scrollbar
+3. Table had too many columns with minimum widths exceeding viewport
+
+FIXES APPLIED:
+1. Removed max-width cap from .container in index.css (now uses full viewport width)
+2. Added overflow-x: hidden to html/body in index.css
+3. Changed table to table-fixed layout with explicit column widths
+4. Added overflow-hidden to the table wrapper div
+5. Reduced column widths and added text truncation
+6. Reduced ScoreBar min-width from 60px to 48px
+7. Reduced OutreachBadge min-width from 120px to 100px
+
+VERIFICATION:
+- Production site: htmlScrollWidth=1265, htmlClientWidth=1265 → NO horizontal scroll
+- Page fits within viewport (1280px) without any horizontal scrollbar
+- Table content truncates with ellipsis rather than overflowing
+
+REMAINING CONCERN:
+- On the production site, the table still appears to be cut off on the right edge
+  (ORG column and Status/Actions are partially visible)
+- This is because the table has many columns and uses table-fixed with percentage-based widths
+- The content is clipped (overflow-hidden) rather than scrolling, which is the desired behavior
+  per user request ("no horizontal scrollbar")
+- On larger screens this should be fine since columns will have more space

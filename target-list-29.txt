@@ -1,0 +1,31 @@
+29 Target Properties from old deployment (ncpropdash-jkcpgvyb.manus.space):
+
+1. BELHAVEN SQUARE - BELHAVEN, NC - Beaufort County - 32 units - Critical
+2. DURHAM VILLAGE APARTMENTS - BURGAW, NC - Pender County - 35 units - Critical
+3. NORTHWOODS APARTMENTS - Burgaw, NC - Pender County - 50 units - Critical
+4. HOLLY PLAZA APARTMENTS - Holly Ridge, NC - Onslow County - 45 units - Critical
+5. Metro Arms Apts - WASHINGTON, NC - Beaufort County - 12 units - Critical
+6. Tidewater Townhomes - WILMINGTON, NC - New Hanover County - 104 units - Critical
+7. Rolling Meadows Apartments - ROCKY MOUNT, NC - Nash County - 130 units - Critical
+8. SANFORD GARDENS - Sanford, NC - Lee County - 50 units - Critical
+9. FOREST RIDGE APARTMENTS - Sanford, NC - Lee County - 40 units - Critical
+10. CARTERET COURT APARTMENTS - BEAUFORT, NC - Carteret County - 78 units - Critical
+11. Gregg Court Apartments - Rocky Mount, NC - Nash County - 72 units - Critical
+12. SMC GROUP HOME II - CHARLOTTE, NC - Mecklenburg County - 6 units - Critical
+13. JEFFERSON COURT APARTMENTS - Goldsboro, NC - Wayne County - 60 units - Critical
+14. Parker Heights Apartments - Charlotte, NC - Mecklenburg County - 100 units - High
+15. POPLAR GROVE - Charlotte, NC - Mecklenburg County - 130 units - High
+16. Clayton Court Apartments - Clayton, NC - Johnston County - 4 units - High
+17. WHITE HILL APARTMENTS - Huntersville, NC - Mecklenburg County - 40 units - High
+18. ARC/HDS FORSYTH CO GH #2 - WINSTON-SALEM, NC - Forsyth County - 6 units - High
+19. HOFFMAN HOMES - GASTONIA, NC - Gaston County - 81 units - High
+20. GREENHAVEN TOWNHOUSES - CHARLOTTE, NC - Mecklenburg County - 49 units - High
+21. FARM LANE APTS - Charlotte, NC - Mecklenburg County - 120 units - High
+22. FAIRMARKET PLAZA APARTMENTS - Charlotte, NC - Mecklenburg County - 120 units - High
+23. SUMMIT VILLAGE APARTMENTS - STATESVILLE, NC - Iredell County - 80 units - High
+24. PEACHTREE COURT APARTMENTS - AHOSKIE, NC - Hertford County - 50 units - High
+25. Carriage Hill Apts. aka Henry Street Apts. - ROANOKE RAPIDS, NC - Halifax County - 46 units - High
+26. PARKSIDE APARTMENTS - Greensboro, NC - Guilford County - 71 units - Medium
+27. Northcross Townhomes - Charlotte, NC - MECKLENBURG County - 99 units - Medium
+28. WINC... (truncated - need to get the last 2)
+29. (need to scroll for last entry)

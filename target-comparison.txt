@@ -1,0 +1,20 @@
+Target Comparison Between Deployments
+======================================
+
+Old deployment (ncpropdash-jkcpgvyb): 29 targets
+Current deployment (ncpropdash-jqd4ra2c): 21 targets
+
+IMPORTANT: The current deployment's outreach-report page is showing 0 targets in the UI
+even though the markdown extraction shows 21. This is a rendering/data loading issue.
+
+MISSING from current deployment (8 properties):
+1. CARTERET COURT APARTMENTS - BEAUFORT, NC - Carteret County - 78 units - Critical
+2. Gregg Court Apartments - Rocky Mount, NC - Nash County - 72 units - Critical
+3. JEFFERSON COURT APARTMENTS - Goldsboro, NC - Wayne County - 60 units - Critical
+4. Clayton Court Apartments - Clayton, NC - Johnston County - 4 units - High
+5. GREENHAVEN TOWNHOUSES - CHARLOTTE, NC - Mecklenburg County - 49 units - High
+6. PEACHTREE COURT APARTMENTS - AHOSKIE, NC - Hertford County - 50 units - High
+7. WINCHESTER TOWER / OXFORD ROW II - Mount Pleasant, MI - Midland County - 189 units - Medium
+8. CANTERBURY GARDENS - Coldwater, MI - Branch County - 30 units - Medium
+
+These need to be added to the current deployment's database.

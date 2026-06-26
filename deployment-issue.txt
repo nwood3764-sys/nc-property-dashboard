@@ -1,0 +1,18 @@
+KEY FINDING: My CSS/layout changes DID NOT DEPLOY to production.
+
+Evidence from the live site (ncpropdash-jqd4ra2c.manus.space):
+- Table parent class is still "overflow-x-auto" (should be "w-full overflow-hidden")
+- Table layout is still "auto" (should be "fixed")
+- Table width is 1649px, which exceeds the viewport width of 1265px
+- The grandparent class is "bg-white border border-border rounded-sm shadow-sm overflow-hidden" (correct)
+- Body overflowX is "visible" (should be "hidden")
+
+The git push went through, but the deployment doesn't auto-rebuild from GitHub.
+I need to trigger a rebuild/redeploy of the site.
+
+The table has 15 columns and is 1649px wide vs 1265px viewport = 384px overflow.
+This is the root cause of the horizontal scrollbar the user is seeing.
+
+SOLUTION: Need to both:
+1. Make the changes more aggressive (the table is 1649px which is too wide even with table-fixed)
+2. Trigger a redeploy so the changes actually take effect
