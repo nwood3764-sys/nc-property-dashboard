@@ -334,8 +334,8 @@ export default function PropertyTable({ properties, sortField, sortDirection, on
 
   return (
     <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
-      <div className="w-full">
-        <table className="w-full text-sm table-fixed">
+      <div className="w-full overflow-hidden">
+        <table className="w-full text-sm table-fixed" style={{ tableLayout: 'fixed' }}>
           <thead>
             <tr className="bg-[oklch(0.22_0.06_250)] text-white">
               {hasSelection && (
